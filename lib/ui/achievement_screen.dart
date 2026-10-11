@@ -25,10 +25,10 @@ class AchievementScreen extends StatelessWidget {
   const AchievementScreen({super.key});
 
   static const List<AchievementData> achievements = [
-    // Words Found
-    AchievementData(id: 'words_50', title: 'Word Smith', description: 'Find 50 words', targetValue: 50, rewardHints: 2, icon: Icons.text_snippet_rounded),
-    AchievementData(id: 'words_250', title: 'Vocab Master', description: 'Find 250 words', targetValue: 250, rewardHints: 5, icon: Icons.library_books_rounded),
-    AchievementData(id: 'words_1000', title: 'Lexicon Legend', description: 'Find 1000 words', targetValue: 1000, rewardHints: 10, icon: Icons.menu_book_rounded),
+    // Equations Solved
+    AchievementData(id: 'words_50', title: 'Math Apprentice', description: 'Solve 50 equations', targetValue: 50, rewardHints: 2, icon: Icons.calculate_outlined),
+    AchievementData(id: 'words_250', title: 'Arithmetic Wizard', description: 'Solve 250 equations', targetValue: 250, rewardHints: 5, icon: Icons.calculate_rounded),
+    AchievementData(id: 'words_1000', title: 'Crossmath Legend', description: 'Solve 1000 equations', targetValue: 1000, rewardHints: 10, icon: Icons.auto_awesome_rounded),
     // Levels Completed
     AchievementData(id: 'levels_10', title: 'Beginner', description: 'Complete 10 levels', targetValue: 10, rewardHints: 2, icon: Icons.star_border_rounded),
     AchievementData(id: 'levels_50', title: 'Explorer', description: 'Complete 50 levels', targetValue: 50, rewardHints: 5, icon: Icons.star_half_rounded),

@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   final List<String> _loadingTips = const [
     'Warming the hearth in Oakheart...',
-    'Gathering fresh wooden letter tiles...',
+    'Gathering fresh wooden number tiles...',
     'Mayor Bramble is preparing your daily rewards...',
     'Brewing chamomile tea at the bakery...',
   ];
@@ -238,9 +238,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
         const SizedBox(height: 16),
 
-        // Main Title: WORD HAVEN
+        // Main Title: NUMBER HAVEN
         Text(
-          'WORD HAVEN',
+          'NUMBER HAVEN',
           textAlign: TextAlign.center,
           style: GoogleFonts.lilitaOne(
             fontSize: 40,

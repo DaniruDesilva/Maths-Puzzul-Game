@@ -7,19 +7,15 @@ import 'providers/user_provider.dart';
 import 'services/notification_service.dart';
 import 'services/sound_service.dart';
 import 'app_router.dart';
-import 'data/word_dictionary.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load the full English dictionary in the background (used for bonus words)
-  WordDictionary.instance.load();
-  
   await NotificationService.initialize();
   await NotificationService.scheduleDailyReminder();
   await SoundService.init();
 
-  // Lock to portrait mode for best hex grid experience
+  // Lock to portrait mode for best mobile experience
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
@@ -28,7 +24,7 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark, // Dark icons for light background
+      statusBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -38,19 +34,19 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GameProvider()),
       ],
-      child: const WordPuzzleApp(),
+      child: const NumberHavenApp(),
     ),
   );
 }
 
-class WordPuzzleApp extends StatefulWidget {
-  const WordPuzzleApp({super.key});
+class NumberHavenApp extends StatefulWidget {
+  const NumberHavenApp({super.key});
 
   @override
-  State<WordPuzzleApp> createState() => _WordPuzzleAppState();
+  State<NumberHavenApp> createState() => _NumberHavenAppState();
 }
 
-class _WordPuzzleAppState extends State<WordPuzzleApp> with WidgetsBindingObserver {
+class _NumberHavenAppState extends State<NumberHavenApp> with WidgetsBindingObserver {
   
   @override
   void initState() {

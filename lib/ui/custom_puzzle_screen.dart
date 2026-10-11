@@ -1,9 +1,11 @@
-import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../engine/math/models.dart';
+import '../engine/math/puzzle_codec.dart';
 import '../providers/game_provider.dart';
 import 'game_screen.dart';
 
@@ -15,59 +17,45 @@ class CustomPuzzleScreen extends StatefulWidget {
 }
 
 class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> {
-  final TextEditingController _wordsController = TextEditingController();
-  
-  void _playPuzzle() {
-    final words = _getWords();
-    if (words.isEmpty) {
-      _showError('Please enter at least one word.');
-      return;
-    }
-    if (words.join('').length > 64) {
-      _showError('Too many letters! Maximum is 64.');
-      return;
-    }
-    
-    // Start custom level and navigate to game screen
-    Provider.of<GameProvider>(context, listen: false).startCustomLevel(words);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const GameScreen()));
+  Difficulty _selectedDifficulty = Difficulty.medium;
+  final TextEditingController _seedController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _generateRandomSeed();
   }
-  
-  void _sharePuzzle() {
-    final words = _getWords();
-    if (words.isEmpty) {
-      _showError('Please enter at least one word.');
-      return;
-    }
-    if (words.join('').length > 64) {
-      _showError('Too many letters! Maximum is 64.');
-      return;
-    }
-    
-    // Encode words to a short alphanumeric code (Base64)
-    final text = words.join(',');
-    final code = base64Url.encode(utf8.encode(text));
-    
-    SharePlus.instance.share(
-      ShareParams(
-        text: 'Play my custom Word Haven puzzle!\n\n'
-            'Code: $code\n\n'
-            'Download Word Haven: Cozy Village and enter this code to play!',
-      ),
+
+  void _generateRandomSeed() {
+    final seed = Random().nextInt(900000) + 100000;
+    _seedController.text = seed.toString();
+  }
+
+  String _buildCurrentShareCode() {
+    final seed = int.tryParse(_seedController.text.trim()) ?? 12345;
+    return MathPuzzleCodec.encodeSeed(
+      difficulty: _selectedDifficulty,
+      seed: seed,
+      id: 999,
     );
   }
-  
-  List<String> _getWords() {
-    final text = _wordsController.text.toUpperCase();
-    return text
-        .split(RegExp(r'[,\n\s]+'))
-        .where((w) => w.isNotEmpty && RegExp(r'^[A-Z]+$').hasMatch(w))
-        .toList();
+
+  void _playPuzzle() {
+    final code = _buildCurrentShareCode();
+    final provider = Provider.of<GameProvider>(context, listen: false);
+    provider.startCustomSeed(code);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const GameScreen()));
   }
-  
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: const Color(0xFFD99B9B)),
+
+  void _sharePuzzle() {
+    final code = _buildCurrentShareCode();
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Play my custom Number Haven math crossword puzzle!\n\n'
+            'Difficulty: ${_selectedDifficulty.displayName}\n'
+            'Code: $code\n\n'
+            'Download Number Haven: Cozy Math Village and enter this code to play!',
+      ),
     );
   }
 
@@ -75,19 +63,21 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFF2C1E16), // Dark Wood
+      backgroundColor: const Color(0xFF0F1E28),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFFFDF5E6), size: 32),
+        iconTheme: const IconThemeData(color: Color(0xFFFDF5E6), size: 28),
         title: Text(
-          'CREATE',
+          'CUSTOM PUZZLE',
           style: TextStyle(
             fontFamily: GoogleFonts.lilitaOne().fontFamily,
             color: const Color(0xFFFFD54F),
-            fontSize: 32,
-            letterSpacing: 3,
-            shadows: const [Shadow(color: Colors.black54, offset: Offset(0, 3), blurRadius: 4)],
+            fontSize: 26,
+            letterSpacing: 2.5,
+            shadows: const [
+              Shadow(color: Colors.black54, offset: Offset(0, 3), blurRadius: 4)
+            ],
           ),
         ),
         centerTitle: true,
@@ -97,70 +87,146 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Custom Puzzle',
+            const Text(
+              'Craft & Share Crossmath Puzzles',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: GoogleFonts.lilitaOne().fontFamily,
                 color: Colors.white,
-                fontSize: 28,
-                letterSpacing: 1.5,
-                shadows: const [Shadow(color: Colors.black45, offset: Offset(0, 2), blurRadius: 2)],
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Enter words separated by commas or spaces. We will generate a hexagonal grid for you and your friends.',
+              'Choose your difficulty and seed, or paste a code from a friend to solve their challenge.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFFD7CCC8), fontSize: 16, height: 1.4, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDF5E6), // Parchment
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF8B5A2B), width: 4), // Thick wood border
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 8))],
-                ),
-                padding: const EdgeInsets.all(4),
-                child: TextField(
-                  controller: _wordsController,
-                  maxLines: null,
-                  expands: true,
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                    color: const Color(0xFF5D4037),
-                    fontSize: 24,
-                    letterSpacing: 1,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'CAT, DOG, BIRD...',
-                    hintStyle: TextStyle(
-                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                      color: const Color(0xFFD7CCC8),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                ),
+
+            // Difficulty Segment Selector
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF334155), width: 1.5),
               ),
-            ).animate().slideY(begin: 0.1, duration: 400.ms, curve: Curves.easeOutBack),
-            const SizedBox(height: 24),
+              child: Row(
+                children: Difficulty.values.map((diff) {
+                  final isSelected = diff == _selectedDifficulty;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedDifficulty = diff),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            diff.displayName,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Seed display / card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF334155), width: 2),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black38, blurRadius: 10, offset: Offset(0, 4))
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'PUZZLE SEED NUMBER',
+                    style: TextStyle(
+                      color: Color(0xFFF2C94C),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _seedController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Enter seed...',
+                            hintStyle: TextStyle(color: Color(0xFF64748B)),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded, color: Color(0xFF38BDF8), size: 28),
+                        onPressed: _generateRandomSeed,
+                        tooltip: 'Randomize Seed',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Share Code: ${_buildCurrentShareCode()}',
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
             Row(
               children: [
                 Expanded(
-                  child: _buildButton('PLAY NOW', const Color(0xFF7CB342), _playPuzzle),
+                  child: _buildButton('PLAY NOW', const Color(0xFF10B981), _playPuzzle),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: _buildButton('SHARE CODE', const Color(0xFF00ACC1), _sharePuzzle),
+                  child: _buildButton('SHARE CODE', const Color(0xFF0F766E), _sharePuzzle),
                 ),
               ],
-            ).animate().slideY(begin: 0.2, duration: 500.ms, curve: Curves.easeOutBack),
-            const SizedBox(height: 16),
-            _buildButton('ENTER A CODE', const Color(0xFFF6A000), () => _showEnterCodeDialog(context))
-                .animate().slideY(begin: 0.3, duration: 600.ms, curve: Curves.easeOutBack),
+            ),
+            const SizedBox(height: 14),
+            _buildButton('ENTER A CODE', const Color(0xFFF59E0B), () => _showEnterCodeDialog(context)),
             const SizedBox(height: 16),
           ],
         ),
@@ -176,18 +242,23 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 4), blurRadius: 0)],
+          border: Border.all(color: Colors.white24, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.35),
+              offset: const Offset(0, 4),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Center(
           child: Text(
             text,
-            style: TextStyle(
-              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+            style: const TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
-              shadows: const [Shadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 2)],
             ),
           ),
         ),
@@ -204,73 +275,71 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDF5E6), // Parchment
+            color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFF8B5A2B), width: 4), // Thick wood border
-            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 10))],
+            border: Border.all(color: const Color(0xFF475569), width: 2),
+            boxShadow: const [
+              BoxShadow(color: Colors.black54, blurRadius: 15, offset: Offset(0, 10))
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'ENTER CODE',
+              const Text(
+                'ENTER PUZZLE CODE',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                  fontSize: 28,
-                  color: const Color(0xFF5D4037),
-                  letterSpacing: 2,
-                  shadows: const [Shadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 2)],
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF8B5A2B), width: 2),
+                  border: Border.all(color: const Color(0xFF334155), width: 1.5),
                 ),
                 child: TextField(
                   controller: codeController,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                    color: const Color(0xFF5D4037),
-                    fontSize: 22,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
                   ),
                   decoration: const InputDecoration(
-                    hintText: 'Paste here...',
-                    hintStyle: TextStyle(color: Color(0xFFD7CCC8)),
+                    hintText: 'e.g. NH1-H-42-1002',
+                    hintStyle: TextStyle(color: Color(0xFF475569)),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
+                    contentPadding: EdgeInsets.all(14),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
-                    child: _buildButton('CANCEL', const Color(0xFFE53935), () => Navigator.pop(context)),
+                    child: _buildButton('CANCEL', const Color(0xFFEF4444), () => Navigator.pop(context)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildButton('PLAY', const Color(0xFF7CB342), () {
-                      try {
-                        final text = utf8.decode(base64Url.decode(codeController.text.trim()));
-                        final words = text.split(',');
-                        if (words.isNotEmpty) {
-                          if (words.join('').length > 64) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('This puzzle is too massive to play!'), backgroundColor: Color(0xFFE53935)),
-                            );
-                            return;
-                          }
-                          Navigator.pop(context); // Close dialog
-                          Provider.of<GameProvider>(context, listen: false).startCustomLevel(words);
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const GameScreen()));
-                        }
-                      } catch (e) {
+                    child: _buildButton('PLAY', const Color(0xFF10B981), () {
+                      final input = codeController.text.trim();
+                      final parsed = MathPuzzleCodec.decodeSeed(input);
+                      if (parsed != null) {
+                        Navigator.pop(context);
+                        final provider = Provider.of<GameProvider>(context, listen: false);
+                        provider.startCustomSeed(input);
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const GameScreen()));
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Invalid code!'), backgroundColor: Color(0xFFE53935)),
+                          const SnackBar(
+                            content: Text('Invalid code format! Example: NH1-M-1-12345'),
+                            backgroundColor: Color(0xFFEF4444),
+                          ),
                         );
                       }
                     }),

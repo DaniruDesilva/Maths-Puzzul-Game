@@ -64,6 +64,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       isCustom: provider.isCustomPuzzle,
     );
 
+    final eqCount = provider.currentPuzzle?.equations.length ?? 3;
+    for (int i = 0; i < eqCount; i++) {
+      user.addWordFound();
+    }
+
     if (provider.isDailyChallenge) {
       user.completeDailyChallenge();
     }
@@ -521,7 +526,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 !provider.isDailyChallenge &&
                                 !provider.isCustomPuzzle &&
                                 provider.currentLevel % 3 == 0) {
-                              AdService.showInterstitialAd(proceed);
+                              AdService.showInterstitialAd(proceed, currentLevel: provider.currentLevel);
                             } else {
                               proceed();
                             }

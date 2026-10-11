@@ -1,70 +1,60 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:number_haven/data/level_data.dart';
-import 'package:number_haven/engine/level_engine.dart';
+import 'package:number_haven/data/math_level_repository.dart';
+import 'package:number_haven/engine/math/models.dart';
+import 'package:number_haven/engine/math/puzzle_codec.dart';
 
 void main() {
-  final levels = LevelData.generateAllLevels();
+  group('Number Haven Campaign & Daily Repository Tests', () {
+    test('Campaign has 280 levels mapped across difficulties', () {
+      expect(MathLevelRepository.totalCampaignLevels, equals(280));
 
-  test('280 levels are generated', () {
-    expect(levels.length, 280);
-  });
+      final level1 = MathLevelRepository.getCampaignLevelSync(1);
+      expect(level1.difficulty, equals(Difficulty.easy));
 
-  test('no word is repeated across any level', () {
-    final seen = <String, int>{};
-    for (final level in levels) {
-      for (final w in level['words'] as List<String>) {
-        expect(seen.containsKey(w), isFalse,
-            reason: '$w appears in level ${seen[w]} and level ${level['id']}');
-        seen[w] = level['id'] as int;
+      final level50 = MathLevelRepository.getCampaignLevelSync(50);
+      expect(level50.difficulty, equals(Difficulty.medium));
+
+      final level150 = MathLevelRepository.getCampaignLevelSync(150);
+      expect(level150.difficulty, equals(Difficulty.hard));
+
+      final level250 = MathLevelRepository.getCampaignLevelSync(250);
+      expect(level250.difficulty, equals(Difficulty.expert));
+    });
+
+    test('All sample levels have valid interlocking equations and tray numbers', () {
+      final sampleLevels = [1, 10, 42, 85, 125, 175, 220, 280];
+
+      for (final lvl in sampleLevels) {
+        final puzzle = MathLevelRepository.getCampaignLevelSync(lvl);
+        expect(puzzle.equations.isNotEmpty, isTrue);
+        expect(puzzle.trayNumbers.isNotEmpty, isTrue);
+        expect(puzzle.blankCells.length, equals(puzzle.trayNumbers.length));
       }
-    }
-  });
+    });
 
-  test('no confusing word pairs inside a level', () {
-    for (final level in levels) {
-      final words = level['words'] as List<String>;
-      for (int i = 0; i < words.length; i++) {
-        for (int j = i + 1; j < words.length; j++) {
-          final a = words[i], b = words[j];
-          final rb = b.split('').reversed.join();
-          expect(a.contains(b) || b.contains(a) || a.contains(rb) || rb.contains(a), isFalse,
-              reason: 'Level ${level['id']}: $a / $b');
-        }
-      }
-    }
-  });
+    test('Daily challenge is stable for the day and unique per day', () {
+      final today = DateTime(2026, 10, 12);
+      final p1 = MathLevelRepository.getDailyChallenge(today);
+      final p2 = MathLevelRepository.getDailyChallenge(today);
+      expect(p1.seed, equals(p2.seed));
 
-  test('every board has each target traceable exactly once', () {
-    final sw = Stopwatch()..start();
-    for (final level in levels) {
-      final words = level['words'] as List<String>;
-      final engine = LevelEngine(cols: level['cols'] as int, rows: level['rows'] as int, words: words);
-      for (final w in words) {
-        expect(engine.countPaths(w, limit: 3), 1,
-            reason: 'Level ${level['id']} word $w\n${engine.debugBoard()}');
-      }
-    }
-    // ignore: avoid_print
-    print('Built 280 boards in ${sw.elapsedMilliseconds} ms');
-  });
+      final tomorrow = DateTime(2026, 10, 13);
+      final p3 = MathLevelRepository.getDailyChallenge(tomorrow);
+      expect(p1.seed, isNot(equals(p3.seed)));
+    });
 
-  test('daily challenge is stable for the day and valid', () {
-    final a = LevelData.generateDailyChallenge();
-    final b = LevelData.generateDailyChallenge();
-    expect(a['words'], b['words']);
-    final words = a['words'] as List<String>;
-    final engine = LevelEngine(cols: a['cols'] as int, rows: a['rows'] as int, words: words);
-    for (final w in words) {
-      expect(engine.countPaths(w, limit: 3), 1);
-    }
-    // ignore: avoid_print
-    print('Daily: $words');
-  });
+    test('Seed codes resolve correctly from MathLevelRepository', () {
+      final code = MathPuzzleCodec.encodeSeed(
+        difficulty: Difficulty.hard,
+        seed: 777888,
+        id: 42,
+      );
 
-  test('sample levels', () {
-    for (final id in [1, 6, 11, 22, 41, 61, 121, 161, 201, 241, 280]) {
-      // ignore: avoid_print
-      print('Level $id: ${levels[id - 1]['words']}');
-    }
+      final puzzle = MathLevelRepository.getFromSeedCode(code);
+      expect(puzzle, isNotNull);
+      expect(puzzle!.difficulty, equals(Difficulty.hard));
+      expect(puzzle.seed, equals(777888));
+      expect(puzzle.id, equals(42));
+    });
   });
 }

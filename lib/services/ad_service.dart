@@ -83,13 +83,32 @@ class AdService {
     );
   }
 
-  static void showInterstitialAd(VoidCallback onAdDismissed) {
+  static DateTime? _lastInterstitialTime;
+  static const Duration _interstitialCooldown = Duration(seconds: 120);
+
+  static void showInterstitialAd(VoidCallback onAdDismissed, {int currentLevel = 11}) {
+    // 10-level grace period for new players to establish flow & retention
+    if (currentLevel <= 10) {
+      onAdDismissed();
+      return;
+    }
+
+    // 120-second minimum cooldown between full-screen ads
+    final now = DateTime.now();
+    if (_lastInterstitialTime != null &&
+        now.difference(_lastInterstitialTime!) < _interstitialCooldown) {
+      onAdDismissed();
+      return;
+    }
+
     if (_interstitialAd == null) {
       debugPrint('Warning: attempt to show interstitial before loaded.');
       _createInterstitialAd();
       onAdDismissed();
       return;
     }
+
+    _lastInterstitialTime = now;
 
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (InterstitialAd ad) {

@@ -237,9 +237,9 @@ class VillageData {
           'village/meadow/library_stage3.webp',
         ],
         perks: [
-          'Owl the librarian moves in • +1 coin per bonus word',
-          '+2 coins per bonus word',
-          '+3 coins per bonus word',
+          'Owl the scholar moves in • +1 coin per equation',
+          '+2 coins per equation',
+          '+3 coins per equation',
         ],
         villagerId: 'owl',
         bonusWordCoinsPerStage: 1,

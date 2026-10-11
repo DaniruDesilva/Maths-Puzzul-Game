@@ -19,6 +19,7 @@ class MathPuzzleFactory {
     for (int retry = 0; retry < maxRetries; retry++) {
       final puzzle = _attemptGenerate(
         id: id,
+        originalSeed: seed,
         seed: seed + retry * 997,
         difficulty: difficulty,
         rng: rng,
@@ -32,6 +33,7 @@ class MathPuzzleFactory {
 
   static MathPuzzle? _attemptGenerate({
     required int id,
+    required int originalSeed,
     required int seed,
     required Difficulty difficulty,
     required Random rng,
@@ -113,7 +115,7 @@ class MathPuzzleFactory {
             id: id,
             rows: gridCopy.length,
             cols: gridCopy[0].length,
-            seed: seed,
+            seed: originalSeed,
             difficulty: difficulty,
             grid: gridCopy,
             equations: filled.equations,
