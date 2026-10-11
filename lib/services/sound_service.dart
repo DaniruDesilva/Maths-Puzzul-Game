@@ -6,8 +6,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SoundService {
   static final AudioPlayer _bgmPlayer = AudioPlayer();
   
-  // Use a pool of AudioPlayers to prevent fast typing from clipping sounds
-  static final List<AudioPlayer> _sfxPool = List.generate(5, (_) => AudioPlayer()..setPlayerMode(PlayerMode.lowLatency));
+  static List<AudioPlayer>? _sfxPool;
+  static List<AudioPlayer> get _pool {
+    return _sfxPool ??= List.generate(5, (_) {
+      try {
+        return AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
+      } catch (_) {
+        return AudioPlayer();
+      }
+    });
+  }
   static int _sfxPoolIndex = 0;
   
   static bool _soundEnabled = true;
@@ -28,9 +36,11 @@ class SoundService {
   
   static void setSoundEnabled(bool enabled) {
     _soundEnabled = enabled;
-    if (!enabled) {
-      for (var player in _sfxPool) {
-        player.stop();
+    if (!enabled && _sfxPool != null) {
+      for (var player in _sfxPool!) {
+        try {
+          player.stop();
+        } catch (_) {}
       }
     }
   }
@@ -54,14 +64,16 @@ class SoundService {
   // Play simple system click for immediate UI feedback without needing assets
   static void playClick() {
     if (!_soundEnabled) return;
-    SystemSound.play(SystemSoundType.click);
+    try {
+      SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
   }
 
   static Future<void> playSfx(String fileName) async {
     if (!_soundEnabled) return;
     try {
-      final player = _sfxPool[_sfxPoolIndex];
-      _sfxPoolIndex = (_sfxPoolIndex + 1) % _sfxPool.length;
+      final player = _pool[_sfxPoolIndex];
+      _sfxPoolIndex = (_sfxPoolIndex + 1) % _pool.length;
       await player.play(AssetSource('sounds/$fileName'));
     } catch (e) {
       // Gracefully handle missing assets during development

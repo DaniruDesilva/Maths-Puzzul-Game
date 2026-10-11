@@ -407,6 +407,7 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+
   void addHint([int amount = 1]) {
     hintsRegular += amount;
     _saveUser();

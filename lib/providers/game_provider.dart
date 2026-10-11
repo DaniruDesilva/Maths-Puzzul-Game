@@ -1,46 +1,86 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import '../engine/level_engine.dart';
-import '../data/level_data.dart';
-import '../data/word_dictionary.dart';
+import '../engine/math/models.dart';
+import '../engine/math/evaluator.dart';
+import '../engine/math/hint_engine.dart';
+import '../data/math_level_repository.dart';
 import '../services/sound_service.dart';
 
-enum WordStatus { none, correct, wrong, partial, bonus, alreadyFound }
+class MathMove {
+  final int row;
+  final int col;
+  final int? prevValue;
+  final int? newValue;
+  final Set<int>? prevNotes;
+  final Set<int>? newNotes;
+
+  const MathMove({
+    required this.row,
+    required this.col,
+    this.prevValue,
+    this.newValue,
+    this.prevNotes,
+    this.newNotes,
+  });
+}
 
 class GameProvider extends ChangeNotifier {
-  LevelEngine? engine;
-  List<String> remainingWords = [];
-  List<String> foundWords = [];
-  List<String> bonusWordsList = [];
-  List<HexCell> selectedCells = [];
-  List<HexCell> lastSelectedCells = [];
-  bool isLevelComplete = false;
-  bool isLoading = false;
-  int hintsUsedInLevel = 0;
-  int comboCount = 0;
+  MathPuzzle? currentPuzzle;
   int currentLevel = 1;
   int score = 0;
-  int bonusWordsFound = 0;
-  DateTime? lastWordTime;
-  String currentWord = '';
-  WordStatus lastWordStatus = WordStatus.none;
+  bool isLevelComplete = false;
+  bool isLoading = false;
+  bool levelProgressSaved = false;
   bool isDailyChallenge = false;
   bool isCustomPuzzle = false;
-  bool levelProgressSaved = false;
 
-  VoidCallback? onWordFoundCallback;
-  void Function(String word)? onBonusWordCallback;
-  VoidCallback? onLevelCompleteCallback;
+  int hintsUsedInLevel = 0;
+  int mistakesInLevel = 0;
+  int comboCount = 0;
 
-  int calculateStars() {
-    if (hintsUsedInLevel == 0) return 3;
-    if (hintsUsedInLevel <= 2) return 2;
-    return 1;
-  }
+  // Crossword Grid State
+  List<List<int?>> currentValues = [];
+  Point<int>? selectedCell;
+  List<int> availableTray = [];
 
-  /// Short floating message (e.g. "BONUS +20", "ALREADY FOUND").
+  // Notes Mode & Map ("r,c" -> Set<int>)
+  bool isNotesMode = false;
+  final Map<String, Set<int>> cellNotes = {};
+
+  // Move Stack for Undo
+  final List<MathMove> moveHistory = [];
+
+  // Equations status
+  final Set<int> satisfiedEquationIds = {};
+  final Set<int> violatedEquationIds = {};
+
+  // Smart Hint
+  SmartHint? activeHint;
+
+  // Floating feedback message
   String? feedbackMessage;
   int _feedbackToken = 0;
+
+  // Level completion callback
+  VoidCallback? onLevelCompleteCallback;
+
+  GameProvider() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    isLoading = true;
+    notifyListeners();
+    await MathLevelRepository.preloadCampaign();
+    await _startCurrentLevel();
+  }
+
+  int calculateStars() {
+    if (hintsUsedInLevel == 0 && mistakesInLevel == 0) return 3;
+    if (hintsUsedInLevel <= 2 && mistakesInLevel <= 2) return 2;
+    return 1;
+  }
 
   void showFeedback(String message, {int durationMs = 1200}) {
     feedbackMessage = message;
@@ -54,31 +94,69 @@ class GameProvider extends ChangeNotifier {
     });
   }
 
-  // Use the 280 generated levels
-  late List<Map<String, dynamic>> levels;
+  Future<void> _startCurrentLevel() async {
+    isLoading = true;
+    notifyListeners();
 
-  GameProvider() {
-    levels = LevelData.generateAllLevels();
-    _init();
+    try {
+      if (isDailyChallenge) {
+        currentPuzzle = MathLevelRepository.getDailyChallenge(DateTime.now());
+      } else if (isCustomPuzzle) {
+        currentPuzzle ??= MathLevelRepository.getCampaignLevelSync(1);
+      } else {
+        currentPuzzle = await MathLevelRepository.getCampaignLevel(currentLevel);
+      }
+
+      _resetLevelState();
+    } catch (e) {
+      debugPrint('Error starting level $currentLevel: $e');
+      currentPuzzle = MathLevelRepository.getCampaignLevelSync(currentLevel);
+      _resetLevelState();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  void _init() {
-    _startCurrentLevel();
-  }
+  void _resetLevelState() {
+    if (currentPuzzle == null) return;
 
-  void _startCurrentLevel() {
-    if (isCustomPuzzle) return;
-    
-    int levelIndex = (currentLevel - 1) % levels.length;
-    var levelData = levels[levelIndex];
-    int biomeId = levelData['biome'] as int? ?? 1;
-    SoundService.playBiomeAmbience(biomeId);
-    
-    startLevel(
-      levelData['cols'] as int,
-      levelData['rows'] as int,
-      List<String>.from(levelData['words'] as List),
+    final p = currentPuzzle!;
+    isLevelComplete = false;
+    levelProgressSaved = false;
+    hintsUsedInLevel = 0;
+    mistakesInLevel = 0;
+    activeHint = null;
+    cellNotes.clear();
+    moveHistory.clear();
+    satisfiedEquationIds.clear();
+    violatedEquationIds.clear();
+
+    // Initialize 2D grid
+    currentValues = List.generate(
+      p.rows,
+      (r) => List.generate(
+        p.cols,
+        (c) => p.grid[r][c].isGiven ? p.grid[r][c].solutionValue : null,
+      ),
     );
+
+    // Initialize tray
+    availableTray = List<int>.from(p.trayNumbers)..sort();
+
+    // Auto-select first empty blank cell
+    selectedCell = null;
+    for (int r = 0; r < p.rows; r++) {
+      for (int c = 0; c < p.cols; c++) {
+        if (p.grid[r][c].isBlank && currentValues[r][c] == null) {
+          selectedCell = Point(r, c);
+          break;
+        }
+      }
+      if (selectedCell != null) break;
+    }
+
+    _evaluateEquations();
   }
 
   void startSpecificLevel(int level) {
@@ -88,513 +166,326 @@ class GameProvider extends ChangeNotifier {
     _startCurrentLevel();
   }
 
-  void startCustomLevel(List<String> customWords) {
-    isCustomPuzzle = true;
-    isDailyChallenge = false;
-    
-    int totalLetters = customWords.join('').length;
-    
-    int cols = 6;
-    int rows = 6;
-    
-    if (totalLetters > 40) {
-      cols = 9;
-      rows = 9;
-    } else if (totalLetters > 25) {
-      cols = 8;
-      rows = 8;
-    } else if (totalLetters > 15) {
-      cols = 7;
-      rows = 7;
-    }
-    
-    startLevel(cols, rows, customWords);
-  }
-
-  String get currentTheme {
-    if (isCustomPuzzle) return 'Custom Puzzle';
-    if (isDailyChallenge) return 'Daily Challenge';
-    
-    int levelIndex = (currentLevel - 1) % levels.length;
-    int biomeId = levels[levelIndex]['biome'] as int;
-    switch (biomeId) {
-      case 1: return 'Oakheart Village';
-      case 2: return 'Tidepool Harbor';
-      case 3: return 'Elderwood Grove';
-      case 4: return 'Frostfall Summit';
-      case 5: return 'Cinderforge Keep';
-      case 6: return 'Starlight Nexus';
-      case 7: return 'The Silent Abyss';
-      default: return 'Unknown';
-    }
-  }
-
-  void startLevel(int cols, int rows, List<String> words) {
-    engine = LevelEngine(cols: cols, rows: rows, words: words);
-    remainingWords = List.from(words.map((w) => w.toUpperCase()));
-    foundWords.clear();
-    bonusWordsList.clear();
-    isLevelComplete = false;
-    isLoading = false;
-    selectedCells.clear();
-    lastSelectedCells.clear();
-    comboCount = 0;
-    hintsUsedInLevel = 0;
-    currentWord = '';
-    score = 0;
-    bonusWordsFound = 0;
-    feedbackMessage = null;
-    lastWordStatus = WordStatus.none;
-    levelProgressSaved = false;
-    notifyListeners();
-  }
-
   void startDailyChallenge() {
     isDailyChallenge = true;
-    isLoading = true;
-    notifyListeners();
-    
-    var levelData = LevelData.generateDailyChallenge();
-    startLevel(
-      levelData['cols'] as int,
-      levelData['rows'] as int,
-      List<String>.from(levelData['words'] as List),
-    );
-    
-    isLoading = false;
-    notifyListeners();
+    isCustomPuzzle = false;
+    _startCurrentLevel();
   }
 
-  void selectCell(int q, int r) {
-    if (engine == null) return;
-    if (q < 0 || q >= engine!.cols || r < 0 || r >= engine!.rows) return;
-    HexCell cell = engine!.grid[q][r];
-    if (cell.isFound) return;
-    if (cell.letter == ' ') return;
-
-    // Check if already selected (allow deselect last)
-    if (selectedCells.isNotEmpty && selectedCells.last == cell) return;
-    if (selectedCells.contains(cell)) return;
-
-    // Check adjacency
-    if (selectedCells.isEmpty) {
-      selectedCells.add(cell);
-      _triggerHaptic();
-      SoundService.playThwack();
-    } else {
-      HexCell last = selectedCells.last;
-      List<HexCell> neighbors = engine!.getNeighbors(last.q, last.r);
-      if (neighbors.any((n) => n.q == cell.q && n.r == cell.r)) {
-        selectedCells.add(cell);
-        _triggerHaptic();
-        SoundService.playThwack();
-      } else {
-        // Start a new word if tapped non-adjacent cell
-        selectedCells.clear();
-        selectedCells.add(cell);
-        _triggerHaptic();
-        SoundService.playThwack();
-      }
-    }
-
-    currentWord = selectedCells.map((c) => c.letter).join();
-    notifyListeners();
-  }
-
-  void _triggerHaptic() {
-    HapticFeedback.lightImpact();
-  }
-
-  void endSelection({VoidCallback? onWordFound, void Function(String word)? onBonusWord, VoidCallback? onLevelComplete}) {
-    if (selectedCells.isEmpty || engine == null) return;
-
-    final wordFoundHandler = onWordFound ?? onWordFoundCallback;
-    final bonusWordHandler = onBonusWord ?? onBonusWordCallback;
-    final levelCompleteHandler = onLevelComplete ?? onLevelCompleteCallback;
-
-    String selected = selectedCells.map((c) => c.letter).join();
-    String reversed = selected.split('').reversed.join();
-
-    String? foundWord;
-    for (var word in remainingWords) {
-      if (word == selected || word == reversed) {
-        foundWord = word;
-        break;
-      }
-    }
-
-    if (foundWord != null) {
-      wordFoundHandler?.call();
-      lastWordStatus = WordStatus.correct;
-      remainingWords.remove(foundWord);
-      foundWords.add(foundWord);
-
-      _handleCombo();
-      score += foundWord.length * 10 * comboCount;
-      
-      if (comboCount > 1) {
-        SoundService.playCombo(comboCount);
-      } else {
-        SoundService.playSuccess();
-      }
-      HapticFeedback.heavyImpact();
-
-      for (var cell in selectedCells) {
-        cell.isFound = true;
-      }
-
-      bool levelFinished = remainingWords.isEmpty;
-      if (levelFinished && !levelProgressSaved) {
-        levelCompleteHandler?.call();
-      }
-
-      // Delay grid collapse so UI can animate success
-      Future.delayed(const Duration(milliseconds: 600), () {
-        _collapseGrid();
-        if (levelFinished) {
-          isLevelComplete = true;
-          SoundService.stopAmbience();
-          SoundService.playLevelComplete();
-        }
-        notifyListeners();
-      });
-    } else {
-      // Tiles that belong to the (unique) paths of the remaining targets.
-      final Map<String, List<HexCell>> targetPaths = {};
-      for (final w in remainingWords) {
-        final p = _findValidPathForWord(w);
-        if (p != null) targetPaths[w] = p;
-      }
-      final Set<HexCell> targetCells = targetPaths.values.expand((p) => p).toSet();
-
-      // Is the selection the beginning (or end, if traced backwards) of a
-      // target's real path? Then the player is on the right track.
-      bool onTargetPath = targetPaths.values.any((p) {
-        if (selectedCells.length >= p.length) return false;
-        bool fromStart = true, fromEnd = true;
-        for (int i = 0; i < selectedCells.length; i++) {
-          if (selectedCells[i] != p[i]) fromStart = false;
-          if (selectedCells[i] != p[p.length - 1 - i]) fromEnd = false;
-        }
-        return fromStart || fromEnd;
-      });
-
-      // Bonus word check (full English dictionary)
-      String validBonus = '';
-      if (selected.length >= 3) {
-        if (WordDictionary.instance.contains(selected)) {
-          validBonus = selected;
-        } else if (WordDictionary.instance.contains(reversed)) {
-          validBonus = reversed;
-        }
-      }
-      // A target word (found or not) can never be a bonus word.
-      if (foundWords.contains(validBonus) || remainingWords.contains(validBonus)) {
-        validBonus = '';
-      }
-
-      if (onTargetPath) {
-        lastWordStatus = WordStatus.partial;
-      } else if (validBonus.isNotEmpty && bonusWordsList.contains(validBonus)) {
-        // Already discovered this bonus word - no penalty.
-        lastWordStatus = WordStatus.alreadyFound;
-        showFeedback('ALREADY FOUND');
-      } else if (validBonus.isNotEmpty) {
-        lastWordStatus = WordStatus.bonus;
-        SoundService.playSuccess();
-        int bonusPoints = validBonus.length * 5;
-        score += bonusPoints;
-        bonusWordsFound++;
-        bonusWordsList.add(validBonus);
-        showFeedback('BONUS  +$bonusPoints');
-        bonusWordHandler?.call(validBonus);
-
-        bool brokeTargetWord = false;
-        for (var cell in selectedCells) {
-          if (targetCells.contains(cell)) {
-            brokeTargetWord = true;
-          }
-          cell.isFound = true; // Remove all tiles!
-        }
-        
-        Future.delayed(const Duration(milliseconds: 600), () {
-          if (brokeTargetWord) {
-            shuffleBoard();
-          } else {
-            _collapseGrid();
-          }
-          notifyListeners();
-        });
-      } else if (remainingWords.any((w) => w.startsWith(selected) || w.startsWith(reversed))) {
-        lastWordStatus = WordStatus.partial;
-      } else {
-        SoundService.playFailure();
-        lastWordStatus = WordStatus.wrong;
-        comboCount = 0;
-      }
-    }
-
-    lastSelectedCells = List.from(selectedCells);
-    selectedCells.clear();
-    
-    // Auto-restore hints if the word was wrong or partial
-    if (foundWord == null) {
-      var path = _getAvailableHintPath();
-      if (path != null) {
-        for (var c in path) {
-          if (c.isHinted) {
-            selectedCells.add(c);
-          } else {
-            break;
-          }
-        }
-      }
-    }
-    
-    currentWord = selectedCells.map((c) => c.letter).join();
-    notifyListeners();
-    
-    // Reset status after a delay so UI can animate
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (lastWordStatus != WordStatus.none) {
-        lastWordStatus = WordStatus.none;
-        lastSelectedCells.clear();
-        notifyListeners();
-      }
-    });
-  }
-
-  void _handleCombo() {
-    final now = DateTime.now();
-    if (lastWordTime != null && now.difference(lastWordTime!).inSeconds < 5) {
-      comboCount++;
-    } else {
-      comboCount = 1;
-    }
-    lastWordTime = now;
-  }
-
-  void _collapseGrid() {
-    if (engine == null) return;
-
-    // Safely clear the found cells so they disappear, BUT only if they are
-    // not needed by any remaining word. Hints on surviving tiles are kept,
-    // so a hint the player paid for is never lost.
-    for (int q = 0; q < engine!.cols; q++) {
-      for (int r = 0; r < engine!.rows; r++) {
-        if (engine!.grid[q][r].isFound) {
-          String originalLetter = engine!.grid[q][r].letter;
-          if (originalLetter == ' ') continue; // Already deleted
-          
-          engine!.grid[q][r].letter = ' '; 
-          
-          bool usedByOther = false;
-          for (String word in remainingWords) {
-            if (_findValidPathForWord(word) == null) {
-              usedByOther = true;
-              break;
-            }
-          }
-          
-          if (usedByOther) {
-            engine!.grid[q][r].letter = originalLetter;
-            engine!.grid[q][r].isFound = false; // Restore it!
-          } else {
-            engine!.grid[q][r].isHinted = false;
-          }
-        }
-      }
-    }
-  }
-
-  void shuffleBoard() {
-    if (engine == null) return;
-
-    // Remember how many letters of each word were revealed by hints.
-    final Map<String, int> hintedCounts = {};
-    for (final w in remainingWords) {
-      final p = _findValidPathForWord(w);
-      if (p == null) continue;
-      int n = 0;
-      while (n < p.length && p[n].isHinted) {
-        n++;
-      }
-      if (n > 0) hintedCounts[w] = n;
-    }
-    
-    if (engine!.rePlaceWords(remainingWords)) {
-      // Re-apply the revealed hint letters on the new board.
-      hintedCounts.forEach((w, n) {
-        final p = _findValidPathForWord(w);
-        if (p == null) return;
-        for (int i = 0; i < n && i < p.length; i++) {
-          p[i].isHinted = true;
-        }
-      });
-
-      selectedCells.clear();
-      lastSelectedCells.clear();
-      currentWord = '';
-      lastWordStatus = WordStatus.none;
+  void startCustomSeed(String seedCode) {
+    isCustomPuzzle = true;
+    isDailyChallenge = false;
+    final puzzle = MathLevelRepository.getFromSeedCode(seedCode);
+    if (puzzle != null) {
+      currentPuzzle = puzzle;
+      _resetLevelState();
       notifyListeners();
     }
+  }
+
+  void startCustomLevel([List<String>? words]) {
+    isCustomPuzzle = true;
+    isDailyChallenge = false;
+    currentPuzzle = MathLevelRepository.generateLevelForNumber(currentLevel > 0 ? currentLevel : 1);
+    _resetLevelState();
+    notifyListeners();
+  }
+
+  void restartLevel() {
+    _resetLevelState();
+    notifyListeners();
   }
 
   void nextLevel() {
-    if (!isDailyChallenge && !isCustomPuzzle) {
-      currentLevel++;
-      _startCurrentLevel();
+    currentLevel++;
+    isDailyChallenge = false;
+    isCustomPuzzle = false;
+    _startCurrentLevel();
+  }
+
+  // --- Board Interaction ---
+
+  void selectCell(int r, int c) {
+    if (currentPuzzle == null || isLevelComplete) return;
+    final cell = currentPuzzle!.grid[r][c];
+
+    // Only blank number cells can be selected by player
+    if (cell.isBlank) {
+      selectedCell = Point(r, c);
+      SoundService.playClick();
+      notifyListeners();
     }
   }
 
-  void addHintUsed() {
-    hintsUsedInLevel++;
+  void toggleNotesMode() {
+    isNotesMode = !isNotesMode;
+    SoundService.playClick();
     notifyListeners();
   }
 
-  // --- HINT LOGIC ---
+  void placeNumber(int number) {
+    if (currentPuzzle == null || isLevelComplete) return;
 
-  List<HexCell>? _findValidPathForWord(String word) {
-    if (engine == null) return null;
-    for (int q = 0; q < engine!.cols; q++) {
-      for (int r = 0; r < engine!.rows; r++) {
-        HexCell startCell = engine!.grid[q][r];
-        if (!startCell.isFound && startCell.letter == word[0]) {
-          List<HexCell>? path = _dfsFindWord(word, 0, startCell, [startCell]);
-          if (path != null) return path;
-        }
-      }
-    }
-    // Try reversed word
-    String reversed = word.split('').reversed.join();
-    for (int q = 0; q < engine!.cols; q++) {
-      for (int r = 0; r < engine!.rows; r++) {
-        HexCell startCell = engine!.grid[q][r];
-        if (!startCell.isFound && startCell.letter == reversed[0]) {
-          List<HexCell>? path = _dfsFindWord(reversed, 0, startCell, [startCell]);
-          if (path != null) return path;
-        }
-      }
-    }
-    return null;
-  }
-
-  List<HexCell>? _dfsFindWord(String word, int index, HexCell currentCell, List<HexCell> path) {
-    if (index == word.length - 1) return path;
-    
-    List<HexCell> neighbors = engine!.getNeighbors(currentCell.q, currentCell.r);
-    for (var n in neighbors) {
-      if (!n.isFound && !path.contains(n) && n.letter == word[index + 1]) {
-        path.add(n);
-        var result = _dfsFindWord(word, index + 1, n, path);
-        if (result != null) return result;
-        path.removeLast();
-      }
-    }
-    return null;
-  }
-
-  List<HexCell>? _getAvailableHintPath() {
-    for (String word in remainingWords) {
-      var path = _findValidPathForWord(word);
-      if (path != null && path.isNotEmpty) return path;
-    }
-    return null;
-  }
-
-  bool applyHint() {
-    if (remainingWords.isEmpty) return false;
-    var path = _getAvailableHintPath();
-    if (path != null) {
-      int hintedLetters = 0;
-      for (int i = 0; i < path.length; i++) {
-        if (path[i].isHinted) {
-          hintedLetters++;
-        } else {
-          break;
-        }
-      }
-
-      if (hintedLetters < path.length) {
-        selectedCells.clear();
-        for (int i = 0; i <= hintedLetters; i++) {
-          path[i].isHinted = true;
-          selectCell(path[i].q, path[i].r);
-        }
-        addHintUsed();
-        
-        // Auto-submit if fully hinted
-        if (hintedLetters + 1 == path.length) {
-          Future.delayed(const Duration(milliseconds: 150), () {
-            endSelection();
-          });
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool applyMegaHint() {
-    if (remainingWords.isEmpty) return false;
-    
-    // Find a path that doesn't already have its first and last letters hinted
-    List<HexCell>? targetPath;
-    for (String word in remainingWords) {
-      var p = _findValidPathForWord(word);
-      if (p != null && p.length > 1) {
-        if (!p.first.isHinted || !p.last.isHinted) {
-          targetPath = p;
-          break;
-        }
-      }
-    }
-    
-    if (targetPath != null) {
-      targetPath.first.isHinted = true;
-      targetPath.last.isHinted = true;
-      addHintUsed();
-      notifyListeners();
-      return true;
-    }
-    return false;
-  }
-
-  bool applyUltraHint() {
-    if (remainingWords.isEmpty) return false;
-    
-    // Find a path that isn't fully hinted already
-    List<HexCell>? targetPath;
-    for (String word in remainingWords) {
-      var p = _findValidPathForWord(word);
-      if (p != null) {
-        bool fullyHinted = true;
-        for (var cell in p) {
-          if (!cell.isHinted) {
-            fullyHinted = false;
+    // If no cell is currently focused, select the first empty blank
+    if (selectedCell == null) {
+      for (int r = 0; r < currentPuzzle!.rows; r++) {
+        for (int c = 0; c < currentPuzzle!.cols; c++) {
+          if (currentPuzzle!.grid[r][c].isBlank && currentValues[r][c] == null) {
+            selectedCell = Point(r, c);
             break;
           }
         }
-        if (!fullyHinted) {
-          targetPath = p;
-          break;
+        if (selectedCell != null) break;
+      }
+    }
+
+    if (selectedCell == null) return;
+    final r = selectedCell!.x;
+    final c = selectedCell!.y;
+    final key = '$r,$c';
+
+    if (isNotesMode) {
+      // Toggle note candidate
+      final notes = Set<int>.from(cellNotes[key] ?? {});
+      final prevNotes = Set<int>.from(notes);
+
+      if (notes.contains(number)) {
+        notes.remove(number);
+      } else {
+        notes.add(number);
+      }
+      cellNotes[key] = notes;
+
+      moveHistory.add(MathMove(
+        row: r,
+        col: c,
+        prevNotes: prevNotes,
+        newNotes: notes,
+      ));
+
+      SoundService.playClick();
+      notifyListeners();
+      return;
+    }
+
+    // Normal placement mode
+    if (!availableTray.contains(number)) return;
+
+    final prevVal = currentValues[r][c];
+    final prevNotes = cellNotes[key] != null ? Set<int>.from(cellNotes[key]!) : null;
+
+    // Return previous value to tray if replacing
+    if (prevVal != null) {
+      availableTray.add(prevVal);
+      availableTray.sort();
+    }
+
+    // Consume chosen number from tray
+    availableTray.remove(number);
+    currentValues[r][c] = number;
+    cellNotes.remove(key); // Clear notes when number placed
+
+    moveHistory.add(MathMove(
+      row: r,
+      col: c,
+      prevValue: prevVal,
+      newValue: number,
+      prevNotes: prevNotes,
+      newNotes: null,
+    ));
+
+    SoundService.playThwack();
+
+    // Check equations and victory condition
+    _evaluateEquations();
+    _checkLevelSolved();
+
+    // Auto-advance selection to next empty blank cell
+    _advanceToNextEmptyBlank();
+
+    notifyListeners();
+  }
+
+  void clearSelectedCell() {
+    if (currentPuzzle == null || selectedCell == null || isLevelComplete) return;
+    final r = selectedCell!.x;
+    final c = selectedCell!.y;
+    final key = '$r,$c';
+
+    final prevVal = currentValues[r][c];
+    final prevNotes = cellNotes[key] != null ? Set<int>.from(cellNotes[key]!) : null;
+
+    if (prevVal == null && (prevNotes == null || prevNotes.isEmpty)) return;
+
+    if (prevVal != null) {
+      availableTray.add(prevVal);
+      availableTray.sort();
+      currentValues[r][c] = null;
+    }
+
+    if (prevNotes != null) {
+      cellNotes.remove(key);
+    }
+
+    moveHistory.add(MathMove(
+      row: r,
+      col: c,
+      prevValue: prevVal,
+      newValue: null,
+      prevNotes: prevNotes,
+      newNotes: null,
+    ));
+
+    SoundService.playClick();
+    _evaluateEquations();
+    notifyListeners();
+  }
+
+  void undo() {
+    if (moveHistory.isEmpty || isLevelComplete) return;
+
+    final lastMove = moveHistory.removeLast();
+    final r = lastMove.row;
+    final c = lastMove.col;
+    final key = '$r,$c';
+
+    // Revert value
+    if (lastMove.newValue != null) {
+      // Put placed new value back to tray
+      availableTray.add(lastMove.newValue!);
+      availableTray.sort();
+    }
+
+    if (lastMove.prevValue != null) {
+      // Consume prevValue from tray
+      availableTray.remove(lastMove.prevValue!);
+      currentValues[r][c] = lastMove.prevValue;
+    } else {
+      currentValues[r][c] = null;
+    }
+
+    // Revert notes
+    if (lastMove.prevNotes != null && lastMove.prevNotes!.isNotEmpty) {
+      cellNotes[key] = Set<int>.from(lastMove.prevNotes!);
+    } else {
+      cellNotes.remove(key);
+    }
+
+    selectedCell = Point(r, c);
+    SoundService.playClick();
+    _evaluateEquations();
+    notifyListeners();
+  }
+
+  void _advanceToNextEmptyBlank() {
+    if (currentPuzzle == null) return;
+    final p = currentPuzzle!;
+
+    for (int r = 0; r < p.rows; r++) {
+      for (int c = 0; c < p.cols; c++) {
+        if (p.grid[r][c].isBlank && currentValues[r][c] == null) {
+          selectedCell = Point(r, c);
+          return;
         }
       }
     }
-    
-    if (targetPath != null) {
-      selectedCells.clear();
-      for (var cell in targetPath) {
-        cell.isHinted = true;
-        selectCell(cell.q, cell.r);
+  }
+
+  void _evaluateEquations() {
+    if (currentPuzzle == null) return;
+
+    satisfiedEquationIds.clear();
+    violatedEquationIds.clear();
+
+    for (final eq in currentPuzzle!.equations) {
+      final operands = <int>[];
+      bool allFilled = true;
+
+      for (final cell in eq.operandCells) {
+        final val = currentValues[cell.row][cell.col];
+        if (val == null) {
+          allFilled = false;
+          break;
+        }
+        operands.add(val);
       }
-      addHintUsed();
-      // Auto-submit the word
-      Future.delayed(const Duration(milliseconds: 150), () {
-        endSelection();
-      });
-      return true;
+
+      final targetVal = currentValues[eq.resultCell.row][eq.resultCell.col];
+      if (targetVal == null) allFilled = false;
+
+      if (allFilled) {
+        final isCorrect = MathEvaluator.isSatisfied(operands, eq.operators, targetVal!);
+        if (isCorrect) {
+          satisfiedEquationIds.add(eq.id);
+        } else {
+          violatedEquationIds.add(eq.id);
+        }
+      }
     }
-    return false;
+  }
+
+  void _checkLevelSolved() {
+    if (currentPuzzle == null || isLevelComplete) return;
+
+    // Check if any blank cell is still empty
+    for (int r = 0; r < currentPuzzle!.rows; r++) {
+      for (int c = 0; c < currentPuzzle!.cols; c++) {
+        if (currentPuzzle!.grid[r][c].isBlank && currentValues[r][c] == null) {
+          return; // Still in progress
+        }
+      }
+    }
+
+    // All cells filled. Check if all equations are satisfied
+    if (violatedEquationIds.isEmpty &&
+        satisfiedEquationIds.length == currentPuzzle!.equations.length) {
+      _triggerVictory();
+    } else {
+      mistakesInLevel++;
+      SoundService.playFailure();
+      showFeedback('Equations not matching! Check red lines.');
+    }
+  }
+
+  void _triggerVictory() {
+    isLevelComplete = true;
+    score += (100 * calculateStars());
+    SoundService.playLevelComplete();
+    notifyListeners();
+    onLevelCompleteCallback?.call();
+  }
+
+  // --- Smart Hint ---
+
+  SmartHint? requestSmartHint() {
+    if (currentPuzzle == null || isLevelComplete) return null;
+
+    final hint = MathHintEngine.getSmartHint(
+      puzzle: currentPuzzle!,
+      currentValues: currentValues,
+      currentTray: availableTray,
+    );
+
+    if (hint != null) {
+      activeHint = hint;
+      hintsUsedInLevel++;
+      selectedCell = hint.targetCell;
+      SoundService.playSuccess();
+      notifyListeners();
+    }
+
+    return hint;
+  }
+
+  void applyActiveHint() {
+    if (activeHint == null) return;
+    placeNumber(activeHint!.solutionValue);
+    activeHint = null;
+    notifyListeners();
+  }
+
+  void dismissActiveHint() {
+    activeHint = null;
+    notifyListeners();
   }
 }
