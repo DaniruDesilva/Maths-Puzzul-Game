@@ -45,6 +45,7 @@ flutter:
     - assets/images/village/meadow/
     - assets/images/village/villagers/
     - assets/sounds/
+    - assets/levels/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
