@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:word_puzzle_game/providers/user_provider.dart';
+import 'package:number_haven/providers/user_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

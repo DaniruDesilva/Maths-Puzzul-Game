@@ -42,8 +42,8 @@ class NotificationService {
     }
     
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'daily_challenge_channel',
-      'Daily Challenge Reminders',
+      'number_haven_daily_challenge',
+      'Number Haven Daily Challenge',
       channelDescription: 'Reminders to play the daily challenge to keep your streak',
       importance: Importance.high,
       priority: Priority.high,
@@ -55,11 +55,11 @@ class NotificationService {
     
     await _notificationsPlugin.zonedSchedule(
       id: 0,
-      title: 'New Daily Challenge! 🌍',
-      body: 'Your new Word Haven daily puzzle is ready. Keep your streak alive!',
+      title: 'New Daily Math Challenge! 🧠',
+      body: 'Your new Number Haven daily puzzle is ready. Keep your streak alive!',
       scheduledDate: scheduledDate,
       notificationDetails: platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }

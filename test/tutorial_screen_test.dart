@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:word_puzzle_game/ui/tutorial_screen.dart';
+import 'package:number_haven/ui/tutorial_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

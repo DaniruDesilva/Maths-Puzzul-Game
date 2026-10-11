@@ -4,8 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
-  static const _databaseName = "hexa_quest_v2.db";
-  static const _databaseVersion = 5;
+  static const _databaseName = "number_haven_v1.db";
+  static const _databaseVersion = 1;
 
   static const tableUser = 'user_profile';
   static const tableLevelProgress = 'level_progress';
@@ -61,91 +61,7 @@ class DatabaseHelper {
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colWordsFound INTEGER DEFAULT 0',
-        );
-      } catch (_) {}
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colLevelsCompleted INTEGER DEFAULT 0',
-        );
-      } catch (_) {}
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colHintsUsedTotal INTEGER DEFAULT 0',
-        );
-      } catch (_) {}
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colClaimedAchievements TEXT DEFAULT ""',
-        );
-      } catch (_) {}
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colCoins INTEGER DEFAULT 0',
-        );
-      } catch (_) {}
-      try {
-        await db.execute(
-          'ALTER TABLE $tableUser ADD COLUMN $colVillageBuildings TEXT DEFAULT "{}"',
-        );
-      } catch (_) {}
-
-      try {
-        await db.execute('''
-          CREATE TABLE $tableLevelProgress (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            $colBiomeId INTEGER NOT NULL,
-            $colPackId INTEGER NOT NULL,
-            $colLevelNum INTEGER NOT NULL,
-            $colIsCompleted INTEGER DEFAULT 0,
-            $colStars INTEGER DEFAULT 0,
-            $colHintsUsed INTEGER DEFAULT 0,
-            UNIQUE($colBiomeId, $colPackId, $colLevelNum)
-          )
-        ''');
-      } catch (_) {}
-    }
-
-    if (oldVersion < 4) {
-      try {
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS $tableLevelProgress (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            $colBiomeId INTEGER NOT NULL,
-            $colPackId INTEGER NOT NULL,
-            $colLevelNum INTEGER NOT NULL,
-            $colIsCompleted INTEGER DEFAULT 0,
-            $colStars INTEGER DEFAULT 0,
-            $colHintsUsed INTEGER DEFAULT 0,
-            UNIQUE($colBiomeId, $colPackId, $colLevelNum)
-          )
-        ''');
-      } catch (e) {
-        // Table might already exist
-      }
-    }
-    if (oldVersion < 5) {
-      // Catch users who upgraded to v4 while the migration was accidentally in _onCreate
-      try {
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS $tableLevelProgress (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            $colBiomeId INTEGER NOT NULL,
-            $colPackId INTEGER NOT NULL,
-            $colLevelNum INTEGER NOT NULL,
-            $colIsCompleted INTEGER DEFAULT 0,
-            $colStars INTEGER DEFAULT 0,
-            $colHintsUsed INTEGER DEFAULT 0,
-            UNIQUE($colBiomeId, $colPackId, $colLevelNum)
-          )
-        ''');
-      } catch (e) {
-        // Table might already exist
-      }
-    }
+    // Fresh schema version 1 for Number Haven
   }
 
   Future _onCreate(Database db, int version) async {

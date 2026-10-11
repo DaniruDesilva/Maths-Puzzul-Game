@@ -76,7 +76,7 @@ class _WordPuzzleAppState extends State<WordPuzzleApp> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Word Haven: Cozy Village',
+      title: 'Number Haven: Cozy Math Village',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

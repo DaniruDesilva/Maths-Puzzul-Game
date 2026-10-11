@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:word_puzzle_game/data/level_data.dart';
-import 'package:word_puzzle_game/engine/level_engine.dart';
+import 'package:number_haven/data/level_data.dart';
+import 'package:number_haven/engine/level_engine.dart';
 
 void main() {
   final levels = LevelData.generateAllLevels();
