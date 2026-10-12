@@ -87,8 +87,8 @@ class MathGameToolbar extends StatelessWidget {
               icon: Icons.lightbulb_rounded,
               label: 'Smart Hint',
               isEnabled: !provider.isLevelComplete,
-              badge: user.hintsRegular > 0 ? '${user.hintsRegular}' : '25🪙',
-              badgeColor: user.hintsRegular > 0
+              badge: user.totalHintsAvailable > 0 ? '${user.totalHintsAvailable}' : '25🪙',
+              badgeColor: user.totalHintsAvailable > 0
                   ? const Color(0xFF10B981)
                   : const Color(0xFFD97706),
               accentColor: const Color(0xFF10B981),
@@ -104,8 +104,8 @@ class MathGameToolbar extends StatelessWidget {
   void _handleHintTap(BuildContext context, UserProvider user) {
     if (provider.isLevelComplete) return;
 
-    if (user.hintsRegular > 0) {
-      user.useHint();
+    if (user.totalHintsAvailable > 0) {
+      user.useAnyHint();
       final hint = provider.requestSmartHint();
       if (hint == null) {
         provider.showFeedback('Board is already completely solved!');

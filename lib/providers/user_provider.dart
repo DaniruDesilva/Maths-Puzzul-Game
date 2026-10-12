@@ -316,27 +316,40 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void recordLevelComplete({
+  Map<String, int> recordLevelComplete({
     required int levelIndex, 
     required int scoreEarned, 
     required int starsEarned, 
     required int hintsUsed,
     required bool isDaily,
-    required bool isCustom
+    required bool isCustom,
+    int equationsSolved = 4,
   }) {
+    int baseCoinsEarned = 0;
+    int starCoinsEarned = 0;
+    int libraryCoinsEarned = 0;
+    int brainGrowthEarned = 0;
+    int newStarsCount = 0;
+    bool isNewLevel = false;
+
     if (isDaily || isCustom) {
       totalScore += scoreEarned;
-      brainSize += (starsEarned * 50); // Daily/Custom always grant full brain size
+      brainGrowthEarned = starsEarned * (isDaily ? 50 : 25);
+      brainSize += brainGrowthEarned;
+      baseCoinsEarned = isDaily ? 30 : 15;
+      coins += baseCoinsEarned;
     } else {
       int previousStars = levelStars[levelIndex] ?? 0;
       int bestStars = starsEarned > previousStars ? starsEarned : previousStars;
       levelStars[levelIndex] = bestStars;
       
-      // Star Gate System: Award Brain Size points for NEW stars earned!
+      // Star Gate System: Award Brain Size points and Coins for NEW stars earned!
       if (starsEarned > previousStars) {
-        int newStars = starsEarned - previousStars;
-        brainSize += (newStars * 50); 
-        coins += (newStars * 10); // Reward extra coins for new stars earned!
+        newStarsCount = starsEarned - previousStars;
+        brainGrowthEarned = newStarsCount * 50;
+        brainSize += brainGrowthEarned;
+        starCoinsEarned = newStarsCount * 10;
+        coins += starCoinsEarned;
       }
       
       // Always save level progress to SQLite
@@ -353,29 +366,71 @@ class UserProvider extends ChangeNotifier {
       
       if (levelIndex > levelsCompleted) {
         levelsCompleted = levelIndex;
-        coins += 50; // Earn 50 coins for completing a new level
+        baseCoinsEarned = 50; // Earn 50 coins for completing a new level
+        coins += baseCoinsEarned;
+        isNewLevel = true;
+      }
+
+      // Library Village Perk: +1, +2, or +3 coins per equation on new clears or new stars
+      int libraryStage = villageBuildings['library'] ?? 0;
+      if (libraryStage > 0 && (isNewLevel || newStarsCount > 0)) {
+        libraryCoinsEarned = libraryStage * equationsSolved;
+        coins += libraryCoinsEarned;
       }
     }
     
     _saveUser();
     notifyListeners();
+
+    return {
+      'baseCoins': baseCoinsEarned,
+      'starCoins': starCoinsEarned,
+      'libraryCoins': libraryCoinsEarned,
+      'totalCoins': baseCoinsEarned + starCoinsEarned + libraryCoinsEarned,
+      'brainEarned': brainGrowthEarned,
+      'scoreEarned': scoreEarned,
+      'newStars': newStarsCount,
+      'isNewLevel': isNewLevel ? 1 : 0,
+    };
   }
 
-  void addWordFound() {
-    wordsFound++;
+  void addEquationSolved([int count = 1]) {
+    wordsFound += count;
     _saveUser();
     notifyListeners();
   }
 
-  bool useHint() {
+  void addWordFound() {
+    addEquationSolved(1);
+  }
+
+  int get totalHintsAvailable => hintsRegular + hintsMega + hintsUltra;
+
+  bool useAnyHint() {
     if (hintsRegular > 0) {
       hintsRegular--;
       hintsUsedTotal++;
       _saveUser();
       notifyListeners();
       return true;
+    } else if (hintsMega > 0) {
+      hintsMega--;
+      hintsUsedTotal++;
+      _saveUser();
+      notifyListeners();
+      return true;
+    } else if (hintsUltra > 0) {
+      hintsUltra--;
+      hintsUsedTotal++;
+      _saveUser();
+      notifyListeners();
+      return true;
     }
     return false;
+  }
+
+  bool useHint() {
+    return useAnyHint();
   }
 
   bool useMegaHint() {

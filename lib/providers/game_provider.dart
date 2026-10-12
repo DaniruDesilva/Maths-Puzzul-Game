@@ -34,6 +34,7 @@ class GameProvider extends ChangeNotifier {
   bool levelProgressSaved = false;
   bool isDailyChallenge = false;
   bool isCustomPuzzle = false;
+  Map<String, int>? lastRewards;
 
   int hintsUsedInLevel = 0;
   int mistakesInLevel = 0;
@@ -119,11 +120,10 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _resetLevelState() {
-    if (currentPuzzle == null) return;
-
-    final p = currentPuzzle!;
     isLevelComplete = false;
     levelProgressSaved = false;
+    score = 0;
+    lastRewards = null;
     hintsUsedInLevel = 0;
     mistakesInLevel = 0;
     activeHint = null;
@@ -131,6 +131,10 @@ class GameProvider extends ChangeNotifier {
     moveHistory.clear();
     satisfiedEquationIds.clear();
     violatedEquationIds.clear();
+
+    if (currentPuzzle == null) return;
+
+    final p = currentPuzzle!;
 
     // Initialize 2D grid
     currentValues = List.generate(
@@ -449,7 +453,10 @@ class GameProvider extends ChangeNotifier {
 
   void _triggerVictory() {
     isLevelComplete = true;
-    score += (100 * calculateStars());
+    final eqCount = currentPuzzle?.equations.length ?? 4;
+    final diffIndex = currentPuzzle?.difficulty.index ?? 0;
+    final baseScore = (eqCount * 120) + (diffIndex * 80);
+    score = baseScore + (100 * calculateStars());
     SoundService.playLevelComplete();
     notifyListeners();
     onLevelCompleteCallback?.call();

@@ -55,20 +55,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     int stars = provider.calculateStars();
     int earnedScore = provider.score;
+    final eqCount = provider.currentPuzzle?.equations.length ?? 4;
 
-    user.recordLevelComplete(
+    final rewards = user.recordLevelComplete(
       levelIndex: provider.currentLevel,
       scoreEarned: earnedScore,
       starsEarned: stars,
       hintsUsed: provider.hintsUsedInLevel,
       isDaily: provider.isDailyChallenge,
       isCustom: provider.isCustomPuzzle,
+      equationsSolved: eqCount,
     );
+    provider.lastRewards = rewards;
 
-    final eqCount = provider.currentPuzzle?.equations.length ?? 3;
-    for (int i = 0; i < eqCount; i++) {
-      user.addWordFound();
-    }
+    user.addEquationSolved(eqCount);
 
     if (provider.isDailyChallenge) {
       user.completeDailyChallenge();
@@ -352,32 +352,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Score badge with golden star
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2E1C0F), Color(0xFF1E130A)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
-                    const SizedBox(width: 3),
-                    Text(
-                      '${provider.score}',
-                      style: TextStyle(
-                        color: const Color(0xFFFFFBEB),
-                        fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                        fontSize: 15,
-                      ),
+              Consumer<UserProvider>(
+                builder: (context, user, _) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2E1C0F), Color(0xFF1E130A)],
                     ),
-                  ],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${user.totalScore}',
+                        style: TextStyle(
+                          color: const Color(0xFFFFFBEB),
+                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
@@ -520,11 +522,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
 
     int stars = provider.calculateStars();
-    int baseScore = provider.score;
+    int totalScore = provider.score;
     int starBonus = 100 * stars;
-    int totalScore = baseScore + starBonus;
-    int brainEarned = 50 * stars;
-    int coinsEarned = 10 * stars;
+    int baseScore = (totalScore - starBonus).clamp(0, totalScore);
+
+    final rewards = provider.lastRewards;
+    int totalCoins = rewards?['totalCoins'] ?? (50 + 10 * stars);
+    int brainEarned = rewards?['brainEarned'] ?? (50 * stars);
+    int libraryCoins = rewards?['libraryCoins'] ?? 0;
+    bool isReplay = rewards != null &&
+        (rewards['isNewLevel'] == 0 &&
+            rewards['newStars'] == 0 &&
+            !provider.isDailyChallenge &&
+            !provider.isCustomPuzzle);
 
     return Center(
       child: RepaintBoundary(
@@ -631,17 +641,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       const SizedBox(height: 10),
                       _buildScoreRow(
                         'Brain Growth',
-                        '+${brainEarned}cc',
+                        isReplay ? '+0cc (Earned)' : '+${brainEarned}cc',
                         Icons.psychology_rounded,
                         const Color(0xFFA78BFA),
                       ),
                       const SizedBox(height: 10),
                       _buildScoreRow(
                         'Coins Earned',
-                        '+$coinsEarned',
+                        isReplay ? '+0 (Earned)' : '+$totalCoins',
                         Icons.monetization_on_rounded,
                         const Color(0xFFF59E0B),
                       ),
+                      if (libraryCoins > 0) ...[
+                        const SizedBox(height: 10),
+                        _buildScoreRow(
+                          'Library Perk',
+                          '+$libraryCoins coins',
+                          Icons.menu_book_rounded,
+                          const Color(0xFF34D399),
+                        ),
+                      ],
+                      if (provider.isDailyChallenge) ...[
+                        const SizedBox(height: 10),
+                        _buildScoreRow(
+                          'Streak Reward',
+                          '+3 Hints',
+                          Icons.tips_and_updates_rounded,
+                          const Color(0xFFFBBF24),
+                        ),
+                      ],
                       if (provider.hintsUsedInLevel > 0) ...[
                         const SizedBox(height: 10),
                         _buildScoreRow(

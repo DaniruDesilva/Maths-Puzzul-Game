@@ -28,7 +28,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     // Verify slide 0 header and welcome title
-    expect(find.text('WELCOME TO WORD HAVEN!'), findsOneWidget);
+    expect(find.text('WELCOME TO NUMBER HAVEN!'), findsOneWidget);
     expect(find.text('OAKHEART GUIDE • 1 / 6'), findsOneWidget);
     expect(find.text('MAYOR BRAMBLE • VILLAGE GUIDE'), findsOneWidget);
 
@@ -37,20 +37,20 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify slide 1 (Hexagonal Word Swiping)
-    expect(find.text('HEXAGONAL WORD SWIPING'), findsOneWidget);
+    // Verify slide 1 (Crossmath Equations)
+    expect(find.text('CROSSMATH EQUATIONS'), findsOneWidget);
     expect(find.text('OAKHEART GUIDE • 2 / 6'), findsOneWidget);
-    expect(find.text('SWIPE IN ALL 6 DIRECTIONS!'), findsOneWidget);
+    expect(find.text('HORIZONTAL & VERTICAL EQUATIONS!'), findsOneWidget);
 
     // Tap NEXT to advance to slide 2
     await tester.tap(find.text('NEXT'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify slide 2 (Target Word Boxes)
-    expect(find.text('TARGET WORD BOXES'), findsOneWidget);
+    // Verify slide 2 (Candidate Number Tray)
+    expect(find.text('CANDIDATE NUMBER TRAY'), findsOneWidget);
     expect(find.text('OAKHEART GUIDE • 3 / 6'), findsOneWidget);
-    expect(find.text('FERN THE FOX • MASTER BAKER'), findsOneWidget);
+    expect(find.text('FERN THE FOX • NUMBER CRAFTER'), findsOneWidget);
 
     // Tap NEXT to advance to slide 3
     await tester.tap(find.text('NEXT'));
@@ -60,10 +60,9 @@ void main() {
     // Verify slide 3 (Helpful Puzzle Tools)
     expect(find.text('HELPFUL PUZZLE TOOLS'), findsOneWidget);
     expect(find.text('OAKHEART GUIDE • 4 / 6'), findsOneWidget);
-    expect(find.text('HINT'), findsOneWidget);
+    expect(find.text('SMART HINT'), findsOneWidget);
     expect(find.text('MEGA HINT'), findsOneWidget);
     expect(find.text('ULTRA HINT'), findsOneWidget);
-    expect(find.text('SHUFFLE'), findsOneWidget);
 
     // Tap NEXT to advance to slide 4
     await tester.tap(find.text('NEXT'));

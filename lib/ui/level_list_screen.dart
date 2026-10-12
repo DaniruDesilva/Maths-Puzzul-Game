@@ -63,13 +63,34 @@ class LevelListScreen extends StatelessWidget {
                   ),
                   child: Center(
                     child: isUnlocked
-                        ? Text(
-                            '$levelNum',
-                            style: TextStyle(
-                              color: isCompleted ? const Color(0xFF87A8A4) : const Color(0xFF4A4A4A),
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '$levelNum',
+                                style: TextStyle(
+                                  color: isCompleted ? const Color(0xFF2C3E35) : const Color(0xFF4A4A4A),
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (isCompleted) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    for (int s = 0; s < 3; s++)
+                                      Icon(
+                                        Icons.star_rounded,
+                                        size: 11,
+                                        color: s < (user.levelStars[levelNum] ?? 1)
+                                            ? const Color(0xFFFFB300)
+                                            : const Color(0xFFCFD8DC),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ],
                           )
                         : const Icon(Icons.lock_outline, color: Color(0xFFDCE2DF), size: 20),
                   ),
