@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../engine/math/models.dart';
 import '../providers/game_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/ad_service.dart';
@@ -95,59 +96,59 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Deep Forest / Dusk Village Background
+          // Deep Woodland / Twilight Village Background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF0F1E28), // Deep slate dusk
-                  Color(0xFF1B2E3C), // Cozy rich twilight
-                  Color(0xFF11222D), // Dark grounding shadow
+                  Color(0xFF0C1912), // Deep woodland dusk
+                  Color(0xFF16281E), // Cozy twilight pine
+                  Color(0xFF0E1610), // Grounded shadow
                 ],
                 stops: [0.0, 0.5, 1.0],
               ),
             ),
           ),
 
-          // Custom Ambient Particles
+          // Custom Ambient Lantern Firefly Particles
           const Positioned.fill(
             child: FireflyParticles(),
           ),
 
           // Ambient Background Glows
           Positioned(
-            top: 100,
-            right: -50,
+            top: 80,
+            right: -60,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 320,
+              height: 320,
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                color: const Color(0xFF10B981).withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.2, duration: 4.seconds),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.25, duration: 4.seconds),
           ),
           Positioned(
-            bottom: 50,
-            left: -100,
+            bottom: 60,
+            left: -80,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 380,
+              height: 380,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFD54F).withValues(alpha: 0.08),
+                color: const Color(0xFFFFB74D).withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.1, duration: 5.seconds),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.15, duration: 5.seconds),
           ),
 
           Consumer<GameProvider>(
             builder: (context, provider, child) => BackdropFilter(
-              filter: import_ui.ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+              filter: import_ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 600),
-                color: Colors.black.withValues(alpha: provider.isLevelComplete ? 0.75 : 0.2),
+                color: Colors.black.withValues(alpha: provider.isLevelComplete ? 0.80 : 0.15),
               ),
             ),
           ),
@@ -156,8 +157,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             child: Consumer<GameProvider>(
               builder: (context, provider, child) {
                 if (provider.isLoading || provider.currentPuzzle == null) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF10B981)),
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(color: Color(0xFF10B981)),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading puzzle...',
+                          style: TextStyle(
+                            color: const Color(0xFFD1FAE5),
+                            fontFamily: GoogleFonts.baloo2().fontFamily,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -177,117 +192,276 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Widget _buildGameUI(GameProvider provider) {
     return Column(
       children: [
-        // 1. Top Bar
+        // 1. Top Bar with Level Badge, Progress & Score
         _buildTopBar(provider, context),
 
-        // 2. Feedback Pill
+        // 2. Equation Progress Bar
+        _buildEquationProgressBar(provider),
+
+        // 3. Feedback Pill (if any alert active)
         if (provider.feedbackMessage != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
             child: _buildFeedbackPill(provider.feedbackMessage!),
           ),
 
-        // 3. Central Interactive Crossword Board
+        // 4. Central Interactive Crossword Board (Zero Overflow Guaranteed)
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 2.0),
             child: MathBoardView(provider: provider),
           ),
         ),
 
-        // 4. Floating Smart Hint bubble (if active)
+        // 5. Floating Smart Hint bubble (if active)
         MathHintBubble(provider: provider),
 
-        // 5. Candidate Number Tray
+        // 6. Tactile 3D Candidate Number Tray
         MathNumberTray(provider: provider),
 
-        // 6. Action Toolbar (Undo, Erase, Notes, Hint)
+        // 7. Wood & Brass Action Toolbar (Undo, Erase, Notes, Hint)
         MathGameToolbar(provider: provider),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
       ],
     );
   }
 
   Widget _buildTopBar(GameProvider provider, BuildContext context) {
     final puzzle = provider.currentPuzzle;
-    final diffName = puzzle?.difficulty.displayName.toUpperCase() ?? 'EASY';
+    final diff = puzzle?.difficulty ?? Difficulty.easy;
+
+    // Difficulty badge styling
+    Color diffBg;
+    Color diffText;
+    switch (diff) {
+      case Difficulty.easy:
+        diffBg = const Color(0xFF064E3B);
+        diffText = const Color(0xFF34D399);
+        break;
+      case Difficulty.medium:
+        diffBg = const Color(0xFF78350F);
+        diffText = const Color(0xFFFBBF24);
+        break;
+      case Difficulty.hard:
+        diffBg = const Color(0xFF7C2D12);
+        diffText = const Color(0xFFFF8A65);
+        break;
+      case Difficulty.expert:
+        diffBg = const Color(0xFF4C1D95);
+        diffText = const Color(0xFFA78BFA);
+        break;
+    }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 24),
-                onPressed: () => Navigator.pop(context),
-              ),
-              const SizedBox(width: 4),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    provider.isDailyChallenge
-                        ? 'DAILY CHALLENGE'
-                        : (provider.isCustomPuzzle
-                            ? 'CUSTOM PUZZLE'
-                            : 'LEVEL ${provider.currentLevel}'),
-                    style: const TextStyle(
-                      color: Color(0xFFF2C94C),
-                      fontSize: 12,
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w800,
+          // Left: Back button + Level Info (flexibly constrained)
+          Expanded(
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF26190F),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Color(0xFFFDE68A),
+                      size: 18,
                     ),
                   ),
-                  Text(
-                    diffName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              provider.isDailyChallenge
+                                  ? 'DAILY'
+                                  : (provider.isCustomPuzzle
+                                      ? 'CUSTOM'
+                                      : 'LVL ${provider.currentLevel}'),
+                              style: TextStyle(
+                                color: const Color(0xFFFFFBEB),
+                                fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                fontSize: 16.5,
+                                letterSpacing: 0.8,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Difficulty Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: diffBg,
+                              borderRadius: BorderRadius.circular(7),
+                              border: Border.all(color: diffText.withValues(alpha: 0.6), width: 1.0),
+                            ),
+                            child: Text(
+                              diff.displayName.toUpperCase(),
+                              style: TextStyle(
+                                color: diffText,
+                                fontFamily: GoogleFonts.baloo2().fontFamily,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Cozy Math Village',
+                        style: TextStyle(
+                          color: const Color(0xFF94A3B8),
+                          fontFamily: GoogleFonts.baloo2().fontFamily,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 6),
+
+          // Right: Score Pill + Settings Gear
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Score badge
+              // Score badge with golden star
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF475569), width: 1.5),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2E1C0F), Color(0xFF1E130A)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
                   boxShadow: const [
                     BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
                   ],
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star_rounded, color: Color(0xFFF2C94C), size: 18),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
+                    const SizedBox(width: 3),
                     Text(
                       '${provider.score}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                      style: TextStyle(
+                        color: const Color(0xFFFFFBEB),
+                        fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                        fontSize: 15,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 6),
-              IconButton(
-                icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 26),
-                onPressed: () => _showPauseMenu(provider),
+              GestureDetector(
+                onTap: () => _showPauseMenu(provider),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF26190F),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    color: Color(0xFFE2E8F0),
+                    size: 20,
+                  ),
+                ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Live Equation Completion Progress Tracker ---
+  Widget _buildEquationProgressBar(GameProvider provider) {
+    final puzzle = provider.currentPuzzle;
+    if (puzzle == null) return const SizedBox.shrink();
+
+    final totalEquations = puzzle.equations.length;
+    final satisfiedCount = provider.satisfiedEquationIds.length;
+    final progress = totalEquations > 0 ? (satisfiedCount / totalEquations).clamp(0.0, 1.0) : 0.0;
+    final isAllSolved = satisfiedCount == totalEquations;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E140C).withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isAllSolved
+              ? const Color(0xFF10B981)
+              : const Color(0xFF4A3320),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isAllSolved ? Icons.check_circle_rounded : Icons.calculate_outlined,
+            color: isAllSolved ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Equations: $satisfiedCount / $totalEquations',
+            style: TextStyle(
+              color: isAllSolved ? const Color(0xFF6EE7B7) : const Color(0xFFE2E8F0),
+              fontFamily: GoogleFonts.baloo2().fontFamily,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: const Color(0xFF2E1F14),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isAllSolved ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -299,8 +473,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       key: ValueKey('feedback_$message'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEF4444).withValues(alpha: 0.9),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFDC2626),
+            Color(0xFFB91C1C),
+          ],
+        ),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFEF4444).withValues(alpha: 0.4),
@@ -317,8 +497,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           Flexible(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
+                fontFamily: GoogleFonts.baloo2().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -328,7 +509,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ),
     )
         .animate(key: ValueKey('feedback_$message'))
-        .scale(begin: const Offset(0.8, 0.8), curve: Curves.elasticOut, duration: 500.ms)
+        .scale(begin: const Offset(0.85, 0.85), curve: Curves.elasticOut, duration: 400.ms)
         .fadeIn(duration: 200.ms);
   }
 
@@ -349,14 +530,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: RepaintBoundary(
         key: _shareKey,
         child: Container(
-          color: const Color(0xFF0F1E28),
+          color: const Color(0xFF0F1E16),
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
 
-                // Stars
+                // Stars Display
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -380,45 +561,49 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ],
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
 
                 // Title
                 Text(
                   provider.isDailyChallenge ? 'DAILY CHALLENGE' : 'LEVEL ${provider.currentLevel}',
-                  style: const TextStyle(
-                    color: Color(0xFFFFD54F),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
+                  style: TextStyle(
+                    color: const Color(0xFFFFD54F),
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: 18,
                     letterSpacing: 3,
                   ),
                 ).animate().slideY(begin: 1.0).fadeIn(delay: 200.ms),
 
-                const Text(
+                Text(
                   'SOLVED!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: 44,
                     letterSpacing: 4,
-                    shadows: [
+                    shadows: const [
                       Shadow(color: Color(0xFF10B981), blurRadius: 20),
-                      Shadow(color: Colors.black45, offset: Offset(0, 4), blurRadius: 0),
+                      Shadow(color: Colors.black54, offset: Offset(0, 4), blurRadius: 0),
                     ],
                   ),
                 ).animate().scale(curve: Curves.elasticOut, duration: 800.ms, delay: 400.ms),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
                 // Score Breakdown Card
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  margin: const EdgeInsets.symmetric(horizontal: 22),
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: const Color(0xFF334155), width: 3),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF26190F), Color(0xFF191008)],
+                    ),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: const Color(0xFF5A3C23), width: 2.5),
                     boxShadow: const [
-                      BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, 10))
+                      BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10))
                     ],
                   ),
                   child: Column(
@@ -468,26 +653,26 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ],
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Divider(color: Color(0xFF475569), thickness: 1.5),
+                        child: Divider(color: Color(0xFF4A3320), thickness: 1.5),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'TOTAL',
                             style: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFD4C5B9),
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              fontSize: 16,
                               letterSpacing: 2,
                             ),
                           ),
                           Text(
                             '+$totalScore',
-                            style: const TextStyle(
-                              color: Color(0xFFF8FAFC),
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
+                            style: TextStyle(
+                              color: const Color(0xFFFFFBEB),
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              fontSize: 30,
                             ),
                           ),
                         ],
@@ -496,11 +681,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ).animate(delay: 800.ms).fadeIn(duration: 500.ms).slideY(begin: 0.1, curve: Curves.easeOut),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
                 // Control Buttons
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
                   child: Row(
                     children: [
                       Expanded(
@@ -576,7 +761,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ),
 
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -602,9 +787,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFFCBD5E1),
-                fontSize: 14,
+              style: TextStyle(
+                color: const Color(0xFFCBD5E1),
+                fontFamily: GoogleFonts.baloo2().fontFamily,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -612,10 +798,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: Color(0xFFF8FAFC),
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+          style: TextStyle(
+            color: const Color(0xFFF8FAFC),
+            fontFamily: GoogleFonts.lilitaOne().fontFamily,
+            fontSize: 17,
           ),
         ),
       ],
@@ -629,7 +815,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     bool highlight = false,
     Color? color,
   }) {
-    final btnColor = highlight ? const Color(0xFF10B981) : (color ?? const Color(0xFF334155));
+    final btnColor = highlight ? const Color(0xFF10B981) : (color ?? const Color(0xFF4A3320));
 
     return GestureDetector(
       onTap: onTap,
@@ -641,7 +827,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           border: Border.all(color: Colors.white24, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: btnColor.withValues(alpha: 0.35),
+              color: btnColor.withValues(alpha: 0.4),
               offset: const Offset(0, 4),
               blurRadius: 8,
             ),
@@ -654,11 +840,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
+                fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                fontSize: 16,
+                letterSpacing: 1.0,
               ),
             ),
           ],
@@ -677,11 +863,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF475569), width: 2),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF26190F), Color(0xFF191008)],
+              ),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFF5A3C23), width: 2),
               boxShadow: const [
-                BoxShadow(color: Colors.black54, blurRadius: 15, offset: Offset(0, 10))
+                BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 10))
               ],
             ),
             child: Column(
@@ -691,12 +881,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   'PAUSED',
                   style: TextStyle(
                     fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                    fontSize: 30,
-                    color: Colors.white,
+                    fontSize: 32,
+                    color: const Color(0xFFFFD54F),
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
                 _buildMenuButton('RESUME', const Color(0xFF10B981), () {
                   Navigator.pop(context);
                 }),
@@ -713,7 +903,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               ],
             ),
           ),
-        ).animate().scaleXY(begin: 0.8, end: 1.0, duration: 300.ms, curve: Curves.easeOutBack);
+        ).animate().scaleXY(begin: 0.85, end: 1.0, duration: 250.ms, curve: Curves.easeOutBack);
       },
     );
   }
@@ -735,11 +925,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
+              fontFamily: GoogleFonts.lilitaOne().fontFamily,
               fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
+              letterSpacing: 1.0,
             ),
           ),
         ),
@@ -748,7 +938,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 }
 
-// Custom Ambient Particles
+// Custom Ambient Firefly Particles
 class FireflyParticles extends StatefulWidget {
   const FireflyParticles({super.key});
 

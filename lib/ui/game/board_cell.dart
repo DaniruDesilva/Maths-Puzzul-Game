@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../engine/math/models.dart';
 
 class BoardCellWidget extends StatelessWidget {
@@ -6,6 +7,7 @@ class BoardCellWidget extends StatelessWidget {
   final int? currentValue;
   final bool isSelected;
   final bool isHighlightedInHint;
+  final bool isInActiveEquation;
   final bool isInViolatedEquation;
   final bool isInSatisfiedEquation;
   final Set<int>? notes;
@@ -18,6 +20,7 @@ class BoardCellWidget extends StatelessWidget {
     required this.currentValue,
     this.isSelected = false,
     this.isHighlightedInHint = false,
+    this.isInActiveEquation = false,
     this.isInViolatedEquation = false,
     this.isInSatisfiedEquation = false,
     this.notes,
@@ -39,95 +42,193 @@ class BoardCellWidget extends StatelessWidget {
       return _buildEqualsCell();
     }
 
-    // Number cell (Given or Blank)
+    // Number cell (Given or Blank Slot)
     return _buildNumberCell(context);
   }
 
+  // --- Operator Cell (+, -, x, /) ---
   Widget _buildOpCell() {
     Color opColor;
+    Color glowColor;
     switch (cell.op) {
       case Op.add:
-        opColor = const Color(0xFF4ECDC4);
+        opColor = const Color(0xFF34D399); // Emerald Mint
+        glowColor = const Color(0xFF10B981);
         break;
       case Op.sub:
-        opColor = const Color(0xFFFF8E72);
+        opColor = const Color(0xFFFF8A65); // Warm Sunset Coral
+        glowColor = const Color(0xFFF4511E);
         break;
       case Op.mul:
-        opColor = const Color(0xFFFFD166);
+        opColor = const Color(0xFFFFD54F); // Golden Amber
+        glowColor = const Color(0xFFFFB300);
         break;
       case Op.div:
-        opColor = const Color(0xFF38EF7D);
+        opColor = const Color(0xFF4DD0E1); // Bright Cyan
+        glowColor = const Color(0xFF00ACC1);
         break;
       default:
-        opColor = Colors.white70;
+        opColor = const Color(0xFFE2E8F0);
+        glowColor = Colors.white30;
     }
+
+    final isLit = isInSatisfiedEquation || isInActiveEquation;
 
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2332).withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: opColor.withValues(alpha: 0.35),
-          width: 1.5,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLit
+              ? [
+                  glowColor.withValues(alpha: 0.35),
+                  const Color(0xFF1E1712).withValues(alpha: 0.9),
+                ]
+              : [
+                  const Color(0xFF231B15).withValues(alpha: 0.85),
+                  const Color(0xFF18120E).withValues(alpha: 0.85),
+                ],
         ),
+        borderRadius: BorderRadius.circular(size * 0.22),
+        border: Border.all(
+          color: isLit
+              ? opColor.withValues(alpha: 0.8)
+              : opColor.withValues(alpha: 0.3),
+          width: isLit ? 1.8 : 1.2,
+        ),
+        boxShadow: [
+          if (isLit)
+            BoxShadow(
+              color: glowColor.withValues(alpha: 0.4),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            offset: const Offset(0, 2),
+            blurRadius: 3,
+          ),
+        ],
       ),
       child: Text(
         cell.op?.symbol ?? '',
         style: TextStyle(
-          color: opColor,
-          fontSize: size * 0.45,
+          color: isLit ? Colors.white : opColor,
+          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+          fontSize: size * 0.52,
           fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(
+              color: isLit ? glowColor : Colors.black87,
+              blurRadius: isLit ? 6 : 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  // --- Equals Cell (=) ---
   Widget _buildEqualsCell() {
+    final isLit = isInSatisfiedEquation || isInActiveEquation;
+    const eqColor = Color(0xFFE0E7FF);
+
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2332).withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.white24,
-          width: 1.5,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLit
+              ? [
+                  const Color(0xFF3B82F6).withValues(alpha: 0.25),
+                  const Color(0xFF1E1712).withValues(alpha: 0.9),
+                ]
+              : [
+                  const Color(0xFF231B15).withValues(alpha: 0.85),
+                  const Color(0xFF18120E).withValues(alpha: 0.85),
+                ],
         ),
+        borderRadius: BorderRadius.circular(size * 0.22),
+        border: Border.all(
+          color: isLit
+              ? const Color(0xFF60A5FA).withValues(alpha: 0.7)
+              : Colors.white.withValues(alpha: 0.2),
+          width: isLit ? 1.8 : 1.2,
+        ),
+        boxShadow: [
+          if (isLit)
+            BoxShadow(
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+              blurRadius: 6,
+            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            offset: const Offset(0, 2),
+            blurRadius: 3,
+          ),
+        ],
       ),
       child: Text(
         '=',
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.85),
-          fontSize: size * 0.48,
+          color: isLit ? Colors.white : eqColor,
+          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+          fontSize: size * 0.50,
           fontWeight: FontWeight.bold,
+          shadows: const [
+            Shadow(
+              color: Colors.black87,
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  // --- Number Cell (Given Clue or Interactive Slot) ---
   Widget _buildNumberCell(BuildContext context) {
-    // 1. Given Number (Pre-filled by puzzle)
+    // 1. Given Number (Pre-filled Oak Carved Tile)
     if (cell.isGiven) {
       return Container(
         width: size,
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF2C394B),
-          borderRadius: BorderRadius.circular(12),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4A3425), // Rich warm oak
+              Color(0xFF332216), // Deep aged cedar
+            ],
+          ),
+          borderRadius: BorderRadius.circular(size * 0.24),
           border: Border.all(
             color: isInSatisfiedEquation
-                ? const Color(0xFF10B981).withValues(alpha: 0.6)
-                : const Color(0xFF475569),
-            width: 2.0,
+                ? const Color(0xFF10B981)
+                : (isInActiveEquation
+                    ? const Color(0xFFFFB74D)
+                    : const Color(0xFF8B6B4C)),
+            width: isInSatisfiedEquation || isInActiveEquation ? 2.2 : 1.5,
           ),
           boxShadow: [
+            if (isInSatisfiedEquation)
+              const BoxShadow(
+                color: Color(0x6610B981),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: Colors.black.withValues(alpha: 0.45),
               offset: const Offset(0, 3),
               blurRadius: 4,
             ),
@@ -136,74 +237,140 @@ class BoardCellWidget extends StatelessWidget {
         child: Text(
           '${cell.solutionValue ?? ''}',
           style: TextStyle(
-            color: const Color(0xFFF1F5F9),
-            fontSize: size * 0.42,
-            fontWeight: FontWeight.w800,
+            color: const Color(0xFFFFF7ED), // Warm ivory
+            fontFamily: GoogleFonts.lilitaOne().fontFamily,
+            fontSize: size * 0.44,
+            fontWeight: FontWeight.w900,
+            shadows: const [
+              Shadow(
+                color: Color(0xAA000000),
+                offset: Offset(0, 1.5),
+                blurRadius: 2,
+              ),
+            ],
           ),
         ),
       );
     }
 
-    // 2. Blank Slot (Interactive)
+    // 2. Interactive Blank Slot
     final hasValue = currentValue != null;
     Color borderColor;
     double borderWidth = 2.0;
     List<BoxShadow> shadows = [];
 
     if (isHighlightedInHint) {
+      // Smart hint focus target: radiant emerald glow
       borderColor = const Color(0xFF10B981);
       borderWidth = 3.0;
       shadows.add(const BoxShadow(
-        color: Color(0x8810B981),
-        blurRadius: 10,
+        color: Color(0x9910B981),
+        blurRadius: 12,
         spreadRadius: 2,
       ));
     } else if (isSelected) {
-      borderColor = const Color(0xFFFFD700);
+      // Active player selection: warm amber gold glow
+      borderColor = const Color(0xFFFFD54F);
       borderWidth = 3.0;
       shadows.add(const BoxShadow(
-        color: Color(0x66FFD700),
-        blurRadius: 8,
+        color: Color(0x88FFB74D),
+        blurRadius: 10,
         spreadRadius: 2,
       ));
     } else if (isInViolatedEquation && hasValue) {
+      // Violated equation error: warm coral alert
       borderColor = const Color(0xFFEF4444);
       borderWidth = 2.5;
+      shadows.add(const BoxShadow(
+        color: Color(0x66EF4444),
+        blurRadius: 6,
+      ));
     } else if (isInSatisfiedEquation && hasValue) {
-      borderColor = const Color(0xFF10B981).withValues(alpha: 0.8);
-      borderWidth = 2.0;
+      // Satisfied equation success: emerald leaf rim
+      borderColor = const Color(0xFF10B981);
+      borderWidth = 2.2;
+      shadows.add(const BoxShadow(
+        color: Color(0x5510B981),
+        blurRadius: 6,
+      ));
+    } else if (isInActiveEquation) {
+      borderColor = const Color(0xFFF59E0B).withValues(alpha: 0.7);
+      borderWidth = 1.8;
     } else {
-      borderColor = hasValue ? const Color(0xFF60A5FA) : const Color(0xFF334155);
+      borderColor = hasValue
+          ? const Color(0xFFD97706).withValues(alpha: 0.8)
+          : const Color(0xFF4A3728).withValues(alpha: 0.7);
+      borderWidth = 1.5;
     }
 
-    final tileColor = hasValue
-        ? const Color(0xFF1E3A8A).withValues(alpha: 0.85)
-        : const Color(0xFF0F172A).withValues(alpha: 0.6);
+    // Tile fill gradient
+    final Gradient tileGradient;
+    if (hasValue) {
+      // Placed number: polished golden teak / honey maple tile
+      tileGradient = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFD97706), // Warm golden maple
+          Color(0xFF92400E), // Deep amber wood
+        ],
+      );
+    } else {
+      // Empty recessed wooden socket
+      tileGradient = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isSelected
+            ? [
+                const Color(0xFF332014),
+                const Color(0xFF24150C),
+              ]
+            : [
+                const Color(0xFF1A120B),
+                const Color(0xFF120C07),
+              ],
+      );
+    }
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         width: size,
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: tileColor,
-          borderRadius: BorderRadius.circular(12),
+          gradient: tileGradient,
+          borderRadius: BorderRadius.circular(size * 0.24),
           border: Border.all(
             color: borderColor,
             width: borderWidth,
           ),
-          boxShadow: shadows,
+          boxShadow: [
+            ...shadows,
+            BoxShadow(
+              color: Colors.black.withValues(alpha: hasValue ? 0.4 : 0.25),
+              offset: const Offset(0, 3),
+              blurRadius: 4,
+            ),
+          ],
         ),
         child: hasValue
             ? Text(
                 '$currentValue',
                 style: TextStyle(
-                  color: const Color(0xFF93C5FD),
-                  fontSize: size * 0.45,
+                  color: const Color(0xFFFFFBEB), // Bright warm ivory
+                  fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                  fontSize: size * 0.46,
                   fontWeight: FontWeight.w900,
+                  shadows: const [
+                    Shadow(
+                      color: Color(0x99000000),
+                      offset: Offset(0, 1.5),
+                      blurRadius: 2,
+                    ),
+                  ],
                 ),
               )
             : _buildNotesGrid(),
@@ -211,20 +378,31 @@ class BoardCellWidget extends StatelessWidget {
     );
   }
 
+  // --- Candidate Notes Grid ---
   Widget _buildNotesGrid() {
     if (notes == null || notes!.isEmpty) {
-      return SizedBox(
-        width: size,
-        height: size,
-      );
+      if (isSelected) {
+        // Subtle dotted target indicator when selected but empty
+        return Center(
+          child: Container(
+            width: size * 0.25,
+            height: size * 0.25,
+            decoration: const BoxDecoration(
+              color: Color(0x66FFD54F),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      }
+      return SizedBox(width: size, height: size);
     }
 
     final sortedNotes = notes!.toList()..sort();
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: EdgeInsets.all(size * 0.08),
       child: Wrap(
         spacing: 2,
-        runSpacing: 2,
+        runSpacing: 1,
         alignment: WrapAlignment.center,
         children: sortedNotes
             .take(6)
@@ -232,9 +410,11 @@ class BoardCellWidget extends StatelessWidget {
               (n) => Text(
                 '$n',
                 style: TextStyle(
-                  color: const Color(0xFF94A3B8),
-                  fontSize: size * 0.22,
-                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFE2E8F0),
+                  fontFamily: GoogleFonts.baloo2().fontFamily,
+                  fontSize: size * 0.24,
+                  fontWeight: FontWeight.w800,
+                  height: 1.0,
                 ),
               ),
             )

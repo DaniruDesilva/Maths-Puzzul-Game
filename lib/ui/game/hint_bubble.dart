@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../providers/game_provider.dart';
 
 class MathHintBubble extends StatelessWidget {
@@ -15,20 +16,32 @@ class MathHintBubble extends StatelessWidget {
     if (hint == null) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF064E3B).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF143022), // Deep emerald woodland
+            Color(0xFF0D1F16),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: const Color(0xFF34D399),
-          width: 1.5,
+          width: 1.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            blurRadius: 12,
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 14,
             spreadRadius: 2,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            offset: const Offset(0, 4),
+            blurRadius: 6,
           ),
         ],
       ),
@@ -38,42 +51,59 @@ class MathHintBubble extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.psychology_outlined,
-                color: Color(0xFF6EE7B7),
-                size: 20,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.psychology_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Smart Deduction',
+                  'SMART DEDUCTION',
                   style: TextStyle(
-                    color: Color(0xFFD1FAE5),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    color: const Color(0xFF6EE7B7),
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    letterSpacing: 1.2,
+                    fontSize: 14,
                   ),
                 ),
               ),
               GestureDetector(
                 onTap: () => provider.dismissActiveHint(),
-                child: const Icon(
-                  Icons.close_rounded,
-                  color: Color(0xFFA7F3D0),
-                  size: 18,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFFA7F3D0),
+                    size: 18,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             hint.explanation,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12.5,
+            style: TextStyle(
+              color: const Color(0xFFF1F5F9),
+              fontFamily: GoogleFonts.baloo2().fontFamily,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -85,7 +115,13 @@ class MathHintBubble extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('I will solve it'),
+                child: Text(
+                  'I will solve it',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.baloo2().fontFamily,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
@@ -93,15 +129,23 @@ class MathHintBubble extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 3,
+                ),
+                icon: const Icon(Icons.check_circle_rounded, size: 17),
+                label: Text(
+                  'Place ${hint.solutionValue}',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    letterSpacing: 0.8,
+                    fontSize: 14,
                   ),
                 ),
-                icon: const Icon(Icons.check_circle_outline, size: 16),
-                label: Text('Place ${hint.solutionValue}'),
               ),
             ],
           ),
