@@ -495,4 +495,121 @@ class GameProvider extends ChangeNotifier {
     activeHint = null;
     notifyListeners();
   }
+
+  // --- Mega & Ultra Hints ---
+
+  bool applyMegaHint() {
+    if (currentPuzzle == null || isLevelComplete) return false;
+
+    // Find candidate incomplete equations:
+    // Prefer the equation containing the currently selected cell, if incomplete.
+    MathEquation? targetEq;
+    if (selectedCell != null) {
+      for (final eq in currentPuzzle!.equations) {
+        if (!satisfiedEquationIds.contains(eq.id) &&
+            eq.numberCells.any((c) => c.row == selectedCell!.x && c.col == selectedCell!.y)) {
+          targetEq = eq;
+          break;
+        }
+      }
+    }
+
+    // Otherwise, pick the first unsatisfied equation
+    if (targetEq == null) {
+      for (final eq in currentPuzzle!.equations) {
+        if (!satisfiedEquationIds.contains(eq.id)) {
+          targetEq = eq;
+          break;
+        }
+      }
+    }
+
+    if (targetEq == null) return false;
+
+    activeHint = null;
+    _solveEquationDirectly(targetEq);
+
+    hintsUsedInLevel++;
+    SoundService.playBonus();
+    showFeedback('Mega Hint: Solved 1 full equation!');
+    notifyListeners();
+    return true;
+  }
+
+  bool applyUltraHint() {
+    if (currentPuzzle == null || isLevelComplete) return false;
+
+    final incomplete = currentPuzzle!.equations
+        .where((eq) => !satisfiedEquationIds.contains(eq.id))
+        .toList();
+
+    if (incomplete.isEmpty) return false;
+
+    activeHint = null;
+    _solveEquationDirectly(incomplete[0]);
+
+    if (incomplete.length > 1) {
+      _solveEquationDirectly(incomplete[1]);
+    }
+
+    hintsUsedInLevel += 2;
+    SoundService.playBonus();
+    showFeedback(incomplete.length > 1
+        ? 'Ultra Hint: Solved 2 full equations!'
+        : 'Ultra Hint: Solved equation!');
+    notifyListeners();
+    return true;
+  }
+
+  void _solveEquationDirectly(MathEquation eq) {
+    if (currentPuzzle == null) return;
+
+    for (final cell in eq.numberCells) {
+      if (!cell.isBlank) continue;
+
+      final targetVal = cell.solutionValue;
+      if (targetVal == null) continue;
+
+      final r = cell.row;
+      final c = cell.col;
+      final currentVal = currentValues[r][c];
+
+      if (currentVal == targetVal) continue;
+
+      if (currentVal != null) {
+        availableTray.add(currentVal);
+      }
+
+      if (availableTray.contains(targetVal)) {
+        availableTray.remove(targetVal);
+      } else {
+        for (int gr = 0; gr < currentPuzzle!.rows; gr++) {
+          for (int gc = 0; gc < currentPuzzle!.cols; gc++) {
+            if ((gr != r || gc != c) &&
+                currentPuzzle!.grid[gr][gc].isBlank &&
+                currentValues[gr][gc] == targetVal) {
+              currentValues[gr][gc] = null;
+              break;
+            }
+          }
+        }
+      }
+
+      currentValues[r][c] = targetVal;
+      cellNotes.remove('$r,$c');
+
+      moveHistory.add(MathMove(
+        row: r,
+        col: c,
+        prevValue: currentVal,
+        newValue: targetVal,
+      ));
+    }
+
+    availableTray.sort();
+    _evaluateEquations();
+    _checkLevelSolved();
+    _advanceToNextEmptyBlank();
+  }
 }
+

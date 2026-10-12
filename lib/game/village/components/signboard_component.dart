@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class SignboardComponent extends SpriteComponent {
   late TextComponent _iconComponent;
   late TextComponent _numberComponent;
+  String _initialIcon = '💰';
   String _initialText = '';
 
   SignboardComponent() {
@@ -17,7 +18,7 @@ class SignboardComponent extends SpriteComponent {
     sprite = await Sprite.load('village/meadow/signboard.webp');
     
     _iconComponent = TextComponent(
-      text: '💰',
+      text: _initialIcon,
       textRenderer: TextPaint(
         style: const TextStyle(
           fontSize: 14,
@@ -29,11 +30,11 @@ class SignboardComponent extends SpriteComponent {
     );
     
     _numberComponent = TextComponent(
-      text: _initialText.replaceAll('💰 ', ''),
+      text: _initialText,
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.5,
           shadows: [Shadow(color: Colors.black, blurRadius: 3, offset: Offset(1, 1))],
@@ -47,13 +48,24 @@ class SignboardComponent extends SpriteComponent {
     add(_numberComponent);
   }
 
-  String get text => isLoaded ? '💰 ${_numberComponent.text}' : _initialText;
+  void setSign({required String icon, required String text}) {
+    if (isLoaded) {
+      _iconComponent.text = icon;
+      _numberComponent.text = text;
+    } else {
+      _initialIcon = icon;
+      _initialText = text;
+    }
+  }
+
+  String get text => isLoaded ? '${_iconComponent.text} ${_numberComponent.text}' : '$_initialIcon $_initialText';
   
   set text(String value) {
-    if (isLoaded) {
-      _numberComponent.text = value.replaceAll('💰 ', '');
+    if (value.startsWith('🔒')) {
+      setSign(icon: '🔒', text: value.replaceAll('🔒 ', '').replaceAll('🔒', ''));
     } else {
-      _initialText = value;
+      setSign(icon: '💰', text: value.replaceAll('💰 ', '').replaceAll('💰', ''));
     }
   }
 }
+

@@ -36,6 +36,9 @@ class BuildingDef {
   /// Area (1-4) inside the biome whose start unlocks this plot.
   final int unlockArea;
 
+  /// Player level required to unlock this plot for construction.
+  final int requiredLevel;
+
   /// Coin cost of stages 1, 2 and 3.
   final List<int> costs;
 
@@ -74,6 +77,7 @@ class BuildingDef {
     this.flipHorizontal = false,
     this.flipStages,
     required this.unlockArea,
+    this.requiredLevel = 1,
     required this.costs,
     required this.sprites,
     required this.perks,
@@ -145,20 +149,21 @@ class VillageData {
         spriteSize: Size(200, 200), // Scaled down to prevent covering roads
         flipHorizontal: true, // Keep flipped for road connection
         unlockArea: 1,
-        costs: [50, 120, 250],
+        requiredLevel: 1, // Starter plot
+        costs: [100, 250, 500],
         sprites: [
           'village/meadow/cottage_stage1.webp',
           'village/meadow/cottage_stage2.webp',
           'village/meadow/cottage_stage3.webp',
         ],
         perks: [
-          'Bunny the farmer moves in • 5 coins every 3h',
-          '10 coins every 3h',
-          '15 coins every 3h',
+          'Bunny the farmer moves in • 10 coins every 3h',
+          '20 coins every 3h',
+          '35 coins every 3h',
         ],
         reward: BuildingReward(
           type: RewardType.coins, 
-          amounts: [5, 10, 15], 
+          amounts: [10, 20, 35], 
           intervals: [Duration(hours: 3), Duration(hours: 3), Duration(hours: 3)], 
           maxStack: 2,
         ),
@@ -174,20 +179,21 @@ class VillageData {
         spriteSize: Size(200, 200), // Scaled down
         flipHorizontal: true, // User requested rotation
         unlockArea: 1,
-        costs: [80, 180, 350],
+        requiredLevel: 6, // Unlocks after early starter pack
+        costs: [200, 450, 850],
         sprites: [
           'village/meadow/bakery_stage1.webp',
           'village/meadow/bakery_stage2.webp',
           'village/meadow/bakery_stage3.webp',
         ],
         perks: [
-          'Fox the baker moves in • 10 coins every 2h',
-          '20 coins every 2h',
+          'Fox the baker moves in • 15 coins every 2h',
           '30 coins every 2h',
+          '50 coins every 2h',
         ],
         reward: BuildingReward(
           type: RewardType.coins, 
-          amounts: [10, 20, 30], 
+          amounts: [15, 30, 50], 
           intervals: [Duration(hours: 2), Duration(hours: 2), Duration(hours: 2)], 
           maxStack: 3,
         ),
@@ -203,7 +209,8 @@ class VillageData {
         spriteSize: Size(230, 230), 
         flipHorizontal: true, // Flipped so the door perfectly faces the cobblestone road
         unlockArea: 2,
-        costs: [120, 250, 450],
+        requiredLevel: 14, // Mid-village milestone
+        costs: [350, 750, 1400],
         sprites: [
           'village/meadow/windmill_stage1.webp',
           'village/meadow/windmill_stage2.webp',
@@ -230,19 +237,20 @@ class VillageData {
         spriteSize: Size(200, 200), // Scaled down
         flipHorizontal: true, // User requested rotation
         unlockArea: 3,
-        costs: [150, 300, 550],
+        requiredLevel: 22, // Advanced scholar milestone
+        costs: [500, 1100, 2000],
         sprites: [
           'village/meadow/library_stage1.webp',
           'village/meadow/library_stage2.webp',
           'village/meadow/library_stage3.webp',
         ],
         perks: [
-          'Owl the scholar moves in • +1 coin per equation',
-          '+2 coins per equation',
-          '+3 coins per equation',
+          'Professor Hoot moves in • +2 coins per equation',
+          '+4 coins per equation',
+          '+6 coins per equation',
         ],
         villagerId: 'owl',
-        bonusWordCoinsPerStage: 1,
+        bonusWordCoinsPerStage: 2,
         signboardPos: Offset(170, 160), // Inside Library yard, right side
       ),
       BuildingDef(
@@ -254,7 +262,8 @@ class VillageData {
         flipHorizontal: false, // Stage 1 naturally faces bottom-left
         flipStages: [false, false, false], // All new tower stages naturally face bottom-left
         unlockArea: 4,
-        costs: [200, 400, 700],
+        requiredLevel: 30, // Apex village milestone
+        costs: [800, 1600, 3000],
         sprites: [
           'village/meadow/tower_stage1.webp',
           'village/meadow/tower_stage2.webp',
@@ -262,7 +271,7 @@ class VillageData {
         ], 
         perks: [
           '1 Mega hint every day',
-          '1 Mega hint every day • faster',
+          '1 Mega hint every 12h',
           '2 Mega hints every day',
         ],
         reward: BuildingReward(

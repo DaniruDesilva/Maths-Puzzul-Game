@@ -65,12 +65,14 @@ class BuildingComponent extends PositionComponent with TapCallbacks {
   }
   
   int _lastStage = -1;
+  int _lastUserLevel = -1;
 
   @override
   void update(double dt) {
     super.update(dt);
     int currentStage = userProvider.villageBuildings[def.id] ?? 0;
-    if (currentStage != _lastStage) {
+    int currentUserLevel = userProvider.currentLevel;
+    if (currentStage != _lastStage || currentUserLevel != _lastUserLevel) {
       if (_lastStage != -1 && currentStage > _lastStage) {
         // Upgraded! Spawn SpellBuildEffect
         // We add it to the parent (World) so it's not clipped and renders on top easily
@@ -78,6 +80,7 @@ class BuildingComponent extends PositionComponent with TapCallbacks {
       }
       
       _lastStage = currentStage;
+      _lastUserLevel = currentUserLevel;
       _loadSpriteForStage(currentStage, isInitial: false);
       _updateCostText(currentStage);
       _updateSmoke(currentStage);
@@ -142,7 +145,8 @@ class BuildingComponent extends PositionComponent with TapCallbacks {
           _spriteComponent!.sprite = sprite;
         }
         
-        _spriteComponent!.setOpacity(isGhost ? 0.3 : 1.0);
+        final isLocked = currentStage == 0 && userProvider.currentLevel < def.requiredLevel;
+        _spriteComponent!.setOpacity(isGhost ? (isLocked ? 0.22 : 0.35) : 1.0);
         
         // Scale the sprite to the defined plot size
         _spriteComponent!.size = size;
@@ -220,8 +224,13 @@ class BuildingComponent extends PositionComponent with TapCallbacks {
       add(_signboard);
     }
 
-    int cost = def.costs[currentStage];
-    _signboard.text = '💰 $cost';
+    final isLocked = currentStage == 0 && userProvider.currentLevel < def.requiredLevel;
+    if (isLocked) {
+      _signboard.setSign(icon: '🔒', text: 'Lv.${def.requiredLevel}');
+    } else {
+      int cost = def.costs[currentStage];
+      _signboard.setSign(icon: '💰', text: '$cost');
+    }
     
     if (currentStage == 0) {
       // Unbuilt: Place the signboard perfectly centered on the isometric dirt patch.

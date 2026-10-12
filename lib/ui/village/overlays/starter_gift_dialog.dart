@@ -221,105 +221,133 @@ class StarterGiftDialog extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    // Concrete Village Upgrade Options (Real building visuals, NO broken emoji glyphs!)
-                    Row(
-                      children: [
-                        // Cottage Option
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF382313),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFD4A373).withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                    // Full-width Meadow Cottage Stage 1 Spotlight Card (100 Coins = 100% Ready to Build!)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF382313),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF10B981), width: 1.6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // 3D Cottage Stage 1 asset
+                          Image.asset(
+                            'assets/images/village/meadow/cottage_stage1.webp',
+                            height: 42,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Image.asset(
-                                  'assets/images/village/meadow/cottage_stage1.webp',
-                                  height: 26,
-                                  fit: BoxFit.contain,
-                                ),
-                                const SizedBox(width: 5),
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
                                     children: [
                                       Text(
-                                        'Cottage',
+                                        'Meadow Cottage',
                                         style: GoogleFonts.lilitaOne(
                                           color: const Color(0xFFFFF9E6),
-                                          fontSize: 11,
+                                          fontSize: 14.5,
+                                          letterSpacing: 0.4,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      Text(
-                                        '60 Coins',
-                                        style: GoogleFonts.baloo2(
-                                          color: const Color(0xFFFFD54F),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.6), width: 1),
+                                        ),
+                                        child: Text(
+                                          'LEVEL 1 • STAGE 1',
+                                          style: GoogleFonts.baloo2(
+                                            color: const Color(0xFF34D399),
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w900,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        // Bakery Option
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF382313),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFD4A373).withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/images/village/meadow/bakery_stage1.webp',
-                                  height: 26,
-                                  fit: BoxFit.contain,
-                                ),
-                                const SizedBox(width: 5),
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Bakery',
-                                        style: GoogleFonts.lilitaOne(
-                                          color: const Color(0xFFFFF9E6),
-                                          fontSize: 11,
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Cost: 100 💰',
+                                      style: GoogleFonts.baloo2(
+                                        color: const Color(0xFFFFD54F),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        '• Ready to Build Now!',
+                                        style: GoogleFonts.baloo2(
+                                          color: const Color(0xFF34D399),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      Text(
-                                        '80 Coins',
-                                        style: GoogleFonts.baloo2(
-                                          color: const Color(0xFFFFD54F),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    // Next milestone pill: Bakery unlocks at Level 6
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/village/meadow/bakery_stage1.webp',
+                            height: 18,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Next Goal: Village Bakery unlocks at Level 6 (200 💰)',
+                              style: GoogleFonts.baloo2(
+                                color: const Color(0xFFD4A373),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

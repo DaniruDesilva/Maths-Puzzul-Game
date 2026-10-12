@@ -164,5 +164,6 @@ class SoundService {
   static void playSuccess() => playSfx('success.wav');
   static void playFailure() => playSfx('failure.wav');
   static void playCombo(int combo) => playSfx('success.wav'); // Fallback
+  static void playBonus() => playSfx('success.wav');
   static void playLevelComplete() => playSfx('level_complete.wav');
 }

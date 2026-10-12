@@ -133,84 +133,99 @@ class _TutorialScreenState extends State<TutorialScreen> {
   Widget _buildTopHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (_currentPage > 0)
-            GestureDetector(
-              onTap: _previousPage,
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3E2718),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD4A373), width: 1.5),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
-                ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFFFD54F), size: 16),
-              ),
-            )
-          else
-            const SizedBox(width: 38),
-
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A1B0E),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD54F), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(color: const Color(0xFFFFD54F).withValues(alpha: 0.25), blurRadius: 6),
-                    ],
+          // 1. Navigation & Progress Bar Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_currentPage > 0)
+                GestureDetector(
+                  onTap: _previousPage,
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3E2718),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFD4A373), width: 1.5),
+                      boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFFFD54F), size: 16),
                   ),
-                  child: Text(
-                    'OAKHEART GUIDE • ${_currentPage + 1} / $_totalPages',
-                    style: GoogleFonts.lilitaOne(
-                      color: const Color(0xFFFFD54F),
-                      fontSize: 12,
-                      letterSpacing: 1.5,
+                )
+              else
+                const SizedBox(width: 38),
+
+              Expanded(
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A1B0E),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFD54F), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(color: const Color(0xFFFFD54F).withValues(alpha: 0.25), blurRadius: 6),
+                        ],
+                      ),
+                      child: Text(
+                        'OAKHEART GUIDE • ${_currentPage + 1} / $_totalPages',
+                        style: GoogleFonts.lilitaOne(
+                          color: const Color(0xFFFFD54F),
+                          fontSize: 12.5,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  _getSlideTitle(_currentPage),
-                  style: GoogleFonts.lilitaOne(
-                    color: Colors.white,
-                    fontSize: 18,
-                    letterSpacing: 1.8,
-                    shadows: const [
-                      Shadow(color: Color(0xFF10B981), blurRadius: 10),
-                      Shadow(color: Colors.black87, offset: Offset(0, 2), blurRadius: 3),
-                    ],
+              ),
+
+              GestureDetector(
+                onTap: _finishTutorial,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3E2718),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD4A373), width: 1.5),
+                    boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  child: Text(
+                    'SKIP',
+                    style: GoogleFonts.lilitaOne(
+                      color: const Color(0xFFE2E8F0),
+                      fontSize: 12,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
-          GestureDetector(
-            onTap: _finishTutorial,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF3E2718),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD4A373), width: 1.5),
-                boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
-              ),
+          const SizedBox(height: 6),
+
+          // 2. Full-Width Slide Title (Zero truncation with FittedBox)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
               child: Text(
-                'SKIP',
+                _getSlideTitle(_currentPage),
+                textAlign: TextAlign.center,
                 style: GoogleFonts.lilitaOne(
-                  color: const Color(0xFFE2E8F0),
-                  fontSize: 12,
-                  letterSpacing: 1.2,
+                  color: Colors.white,
+                  fontSize: 20,
+                  letterSpacing: 1.4,
+                  shadows: const [
+                    Shadow(color: Color(0xFF10B981), blurRadius: 10),
+                    Shadow(color: Colors.black87, offset: Offset(0, 2), blurRadius: 3),
+                  ],
                 ),
               ),
             ),
@@ -252,28 +267,45 @@ class _TutorialScreenState extends State<TutorialScreen> {
               children: [
                 _buildRibbon('✨ A COZY CROSSMATH ADVENTURE ✨'),
                 const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/images/village/meadow/cottage_stage3.webp', height: 80),
-                    const SizedBox(width: 14),
-                    _buildEquationMiniRow([
-                      _buildMiniTile('2', isGiven: true),
-                      _buildMiniTile('+', isOp: true),
-                      _buildMiniTile('3', isBlank: true),
-                      _buildMiniTile('=', isOp: true),
-                      _buildMiniTile('5', isGiven: true),
-                    ]),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/images/village/meadow/cottage_stage3.webp', height: 80),
+                      const SizedBox(width: 14),
+                      _buildEquationMiniRow([
+                        _buildMiniTile('2', isGiven: true),
+                        _buildMiniTile('+', isOp: true),
+                        _buildMiniTile('3', isBlank: true),
+                        _buildMiniTile('=', isOp: true),
+                        _buildMiniTile('5', isGiven: true),
+                      ]),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Solve Math Crosswords • Restore Oakheart Village',
-                  style: GoogleFonts.baloo2(
-                    color: const Color(0xFFFFD54F),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Solve Math Crosswords • Restore Oakheart Village',
+                    style: GoogleFonts.baloo2(
+                      color: const Color(0xFFFFD54F),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 6,
+                  runSpacing: 5,
+                  children: [
+                    _buildPillTag('🧩 Crossmath Logic', const Color(0xFF10B981)),
+                    _buildPillTag('💰 Golden Coins', const Color(0xFFFFD54F)),
+                    _buildPillTag('🏡 Restore Haven', const Color(0xFF38BDF8)),
+                  ],
                 ),
               ],
             ),
@@ -361,7 +393,19 @@ class _TutorialScreenState extends State<TutorialScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCalcGuidePill('↔ Horizontal', '18 - 3 = 15', const Color(0xFFFFD54F)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCalcGuidePill('↕ Vertical', '2 + 3 = 5', const Color(0xFF34D399)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
                   'Rows & Columns intersect! The middle tile balances both equations.',
                   style: GoogleFonts.baloo2(
@@ -417,16 +461,11 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  '1. Tap any empty blank tile on the board\n2. Tap a number from your tray to place it!',
-                  style: GoogleFonts.baloo2(
-                    color: const Color(0xFFFFFBEB),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                _buildStepItem('1', 'Tap any empty blank tile on the board to select it'),
+                const SizedBox(height: 6),
+                _buildStepItem('2', 'Tap a number from your tray to place it!'),
+                const SizedBox(height: 6),
+                _buildStepItem('★', 'Numbers with badge multipliers (like ×2) can be placed into multiple slots!'),
               ],
             ),
           ),
@@ -499,15 +538,18 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildPillTag('HINT', const Color(0xFF10B981)),
-                    const SizedBox(width: 6),
-                    _buildPillTag('MEGA HINT', const Color(0xFFF59E0B)),
-                    const SizedBox(width: 6),
-                    _buildPillTag('ULTRA HINT', const Color(0xFF00ACC1)),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildPillTag('HINT', const Color(0xFF10B981)),
+                      const SizedBox(width: 6),
+                      _buildPillTag('MEGA HINT', const Color(0xFFF59E0B)),
+                      const SizedBox(width: 6),
+                      _buildPillTag('ULTRA HINT', const Color(0xFF00ACC1)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -595,59 +637,23 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '3-STAR EXCELLENCE • BRAIN CAPACITY (cc)',
-                  style: GoogleFonts.lilitaOne(
-                    color: const Color(0xFFFFD54F),
-                    fontSize: 13,
-                    letterSpacing: 1.2,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '3-STAR EXCELLENCE • BRAIN CAPACITY (cc)',
+                    style: GoogleFonts.lilitaOne(
+                      color: const Color(0xFFFFD54F),
+                      fontSize: 13,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                _buildPerkItem(Icons.star_rounded, '3-Star Mastery', 'Solve puzzles with 0 mistakes & 0 hints to earn 3 Stars!', const Color(0xFFFFD54F)),
                 const SizedBox(height: 6),
-                Text(
-                  'Solve puzzles with 0 mistakes & 0 hints to earn 3 Stars! Grow your Brain Size to unlock new biomes on the World Map!',
-                  style: GoogleFonts.baloo2(
-                    color: const Color(0xFFE2E8F0),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: _finishTutorial,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF6EE7B7), width: 2),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.5), blurRadius: 12, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
-                          const SizedBox(width: 8),
-                          Text(
-                            'START YOUR JOURNEY',
-                            style: GoogleFonts.lilitaOne(
-                              color: Colors.white,
-                              fontSize: 16,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildPerkItem(Icons.psychology_rounded, 'Brain Capacity (cc)', 'Grow your Brain Size to unlock new biomes on the World Map!', const Color(0xFF38BDF8)),
+                const SizedBox(height: 6),
+                _buildPerkItem(Icons.card_giftcard_rounded, '100 Coin Starter Gift', 'Mayor Bramble has funds waiting to build your Meadow Cottage!', const Color(0xFF34D399)),
               ],
             ),
           ),
@@ -667,10 +673,24 @@ class _TutorialScreenState extends State<TutorialScreen> {
   // HELPER BUILDERS
   // -------------------------------------------------------------
   Widget _buildSlideWrapper({required Widget child}) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-      child: child,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight - 12),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  child,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -682,12 +702,19 @@ class _TutorialScreenState extends State<TutorialScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF2B1C10), Color(0xFF1A1008)],
+          colors: [
+            Color(0xFF2E1C0F),
+            Color(0xFF1B1008),
+          ],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFD4A373), width: 2),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 14, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: child,
@@ -812,6 +839,114 @@ class _TutorialScreenState extends State<TutorialScreen> {
     );
   }
 
+  Widget _buildStepItem(String step, String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF140D07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF4A3320), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              step,
+              style: GoogleFonts.lilitaOne(color: const Color(0xFF451A03), fontSize: 11.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.baloo2(
+                color: const Color(0xFFFFFBEB),
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalcGuidePill(String dir, String eq, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$dir: ',
+              style: GoogleFonts.baloo2(color: color, fontSize: 11, fontWeight: FontWeight.w800),
+            ),
+            Text(
+              eq,
+              style: GoogleFonts.lilitaOne(color: Colors.white, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPerkItem(IconData icon, String title, String subtitle, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF140D07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.lilitaOne(color: color, fontSize: 12),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.baloo2(
+                    color: const Color(0xFFCBD5E1),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    height: 1.15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildToolFeatureCard({
     required IconData icon,
     required String title,
@@ -904,35 +1039,72 @@ class _TutorialScreenState extends State<TutorialScreen> {
     required String villagerPill,
     required String speech,
   }) {
-    final avatar = Image.asset(imagePath, height: 95, fit: BoxFit.contain);
+    final avatar = Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                const Color(0xFFFFD54F).withValues(alpha: 0.35),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+        Image.asset(imagePath, height: 95, fit: BoxFit.contain),
+      ],
+    );
 
     final bubble = Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFDF5),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFFDF5),
+              Color(0xFFFFF2D6),
+            ],
+          ),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFF7A451A), width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
+          border: Border.all(color: const Color(0xFF8B5A2B), width: 2),
+          boxShadow: const [
+            BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3)),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
               decoration: BoxDecoration(
                 color: const Color(0xFF382313),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFFD54F).withValues(alpha: 0.5), width: 0.8),
               ),
               child: Text(
                 villagerPill,
-                style: GoogleFonts.lilitaOne(color: const Color(0xFFFFD54F), fontSize: 9.5, letterSpacing: 0.8),
+                style: GoogleFonts.lilitaOne(
+                  color: const Color(0xFFFFD54F),
+                  fontSize: 9.5,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
               speech,
-              style: GoogleFonts.baloo2(color: const Color(0xFF4E2C14), fontSize: 12, fontWeight: FontWeight.w700, height: 1.25),
+              style: GoogleFonts.baloo2(
+                color: const Color(0xFF3E2310),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                height: 1.26,
+              ),
             ),
           ],
         ),
@@ -949,45 +1121,104 @@ class _TutorialScreenState extends State<TutorialScreen> {
   // BOTTOM CONTROLS
   // -------------------------------------------------------------
   Widget _buildBottomControls() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFF22140A).withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF6E4726), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: List.generate(
               _totalPages,
-              (index) => Container(
-                width: index == _currentPage ? 22 : 8,
-                height: 8,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: index == _currentPage ? 20 : 6,
+                height: 6,
                 margin: const EdgeInsets.only(right: 5),
                 decoration: BoxDecoration(
-                  color: index == _currentPage ? const Color(0xFFFFD54F) : const Color(0xFF4A3B2C),
-                  borderRadius: BorderRadius.circular(4),
+                  color: index == _currentPage ? const Color(0xFFFFD54F) : const Color(0xFF5A3D24),
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: index == _currentPage
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFFD54F).withValues(alpha: 0.65),
+                            blurRadius: 5,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
                 ),
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _nextPage,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF059669)]),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF6EE7B7), width: 1.8),
-                boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(0, 3))],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _currentPage == _totalPages - 1 ? 'START' : 'NEXT',
-                    style: GoogleFonts.lilitaOne(color: Colors.white, fontSize: 14, letterSpacing: 1.2),
+          const SizedBox(width: 8),
+          Flexible(
+            child: GestureDetector(
+              onTap: _nextPage,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF34D399),
+                      Color(0xFF059669),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-                ],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFA7F3D0), width: 1.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0xFF064E3B),
+                      offset: Offset(0, 3),
+                      blurRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _currentPage == _totalPages - 1 ? 'START YOUR JOURNEY' : 'NEXT',
+                        style: GoogleFonts.lilitaOne(
+                          color: Colors.white,
+                          fontSize: 14,
+                          letterSpacing: 1.1,
+                          shadows: const [
+                            Shadow(color: Color(0xFF064E3B), offset: Offset(0, 1.5), blurRadius: 2),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Icon(
+                        _currentPage == _totalPages - 1 ? Icons.rocket_launch_rounded : Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

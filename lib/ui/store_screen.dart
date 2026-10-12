@@ -143,7 +143,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               // Mega Hints
               _buildStoreItem(
                 title: '5 Mega Hints',
-                description: 'Reveals a key number to unlock multiple equations.',
+                description: 'Instantly solves 1 full equation on the board.',
                 icon: Icons.star_rounded,
                 iconColor: const Color(0xFFFFD700),
                 buttonText: '\$1.99',
@@ -160,7 +160,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               // Ultra Hints
               _buildStoreItem(
                 title: '3 Ultra Hints',
-                description: 'Instantly solves an entire equation.',
+                description: 'Power solver! Instantly completes 2 full equations.',
                 icon: Icons.diamond_rounded,
                 iconColor: const Color(0xFF00D4FF),
                 buttonText: '\$2.99',

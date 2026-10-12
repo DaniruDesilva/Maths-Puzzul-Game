@@ -406,21 +406,9 @@ class UserProvider extends ChangeNotifier {
 
   int get totalHintsAvailable => hintsRegular + hintsMega + hintsUltra;
 
-  bool useAnyHint() {
+  bool useRegularHint() {
     if (hintsRegular > 0) {
       hintsRegular--;
-      hintsUsedTotal++;
-      _saveUser();
-      notifyListeners();
-      return true;
-    } else if (hintsMega > 0) {
-      hintsMega--;
-      hintsUsedTotal++;
-      _saveUser();
-      notifyListeners();
-      return true;
-    } else if (hintsUltra > 0) {
-      hintsUltra--;
       hintsUsedTotal++;
       _saveUser();
       notifyListeners();
@@ -430,7 +418,18 @@ class UserProvider extends ChangeNotifier {
   }
 
   bool useHint() {
-    return useAnyHint();
+    return useRegularHint();
+  }
+
+  bool useAnyHint() {
+    if (hintsRegular > 0) {
+      return useRegularHint();
+    } else if (hintsMega > 0) {
+      return useMegaHint();
+    } else if (hintsUltra > 0) {
+      return useUltraHint();
+    }
+    return false;
   }
 
   bool useMegaHint() {
