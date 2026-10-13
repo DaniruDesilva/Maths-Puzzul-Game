@@ -1,25 +1,48 @@
+import 'dart:io' show Platform;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SoundService {
-  static final AudioPlayer _bgmPlayer = AudioPlayer();
+  static AudioPlayer? _bgmPlayerInstance;
+  static AudioPlayer? get _bgmPlayer {
+    try {
+      return _bgmPlayerInstance ??= AudioPlayer();
+    } catch (e) {
+      debugPrint('AudioPlayer init error: $e');
+      return null;
+    }
+  }
   
   static List<AudioPlayer>? _sfxPool;
   static List<AudioPlayer> get _pool {
-    return _sfxPool ??= List.generate(5, (_) {
-      try {
-        return AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
-      } catch (_) {
-        return AudioPlayer();
-      }
-    });
+    if (_sfxPool != null) return _sfxPool!;
+    try {
+      return _sfxPool = List.generate(5, (_) {
+        try {
+          return AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
+        } catch (_) {
+          return AudioPlayer();
+        }
+      });
+    } catch (_) {
+      return _sfxPool = [];
+    }
   }
   static int _sfxPoolIndex = 0;
   
-  static bool _soundEnabled = true;
-  static bool _musicEnabled = true;
+  static bool get _isInTest {
+    if (kIsWeb) return false;
+    try {
+      return Platform.environment.containsKey('FLUTTER_TEST');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool _soundEnabled = !_isInTest;
+  static bool _musicEnabled = !_isInTest;
 
   static bool get isSoundEnabled => _soundEnabled;
   static bool get isMusicEnabled => _musicEnabled;
@@ -49,11 +72,13 @@ class SoundService {
     _musicEnabled = enabled;
     if (!enabled) {
       _currentBgm = '';
-      try {
-        await _bgmPlayer.stop();
-        await _bgmPlayer.release();
-      } catch (e) {
-        // Ignore audio release errors
+      if (_bgmPlayerInstance != null) {
+        try {
+          await _bgmPlayerInstance!.stop();
+          await _bgmPlayerInstance!.release();
+        } catch (e) {
+          // Ignore audio release errors
+        }
       }
     } else {
       // If re-enabled, resume village music by default
@@ -72,8 +97,13 @@ class SoundService {
   static Future<void> playSfx(String fileName) async {
     if (!_soundEnabled) return;
     try {
-      final player = _pool[_sfxPoolIndex];
-      _sfxPoolIndex = (_sfxPoolIndex + 1) % _pool.length;
+      final pool = _pool;
+      if (pool.isEmpty) {
+        playClick();
+        return;
+      }
+      final player = pool[_sfxPoolIndex];
+      _sfxPoolIndex = (_sfxPoolIndex + 1) % pool.length;
       await player.play(AssetSource('sounds/$fileName'));
     } catch (e) {
       // Gracefully handle missing assets during development
@@ -87,18 +117,20 @@ class SoundService {
     if (!_musicEnabled) return;
     if (_currentBgm == 'village') return; // Already playing
     try {
+      final player = _bgmPlayer;
+      if (player == null) return;
       _currentBgm = 'village';
       await stopAmbience(); // Safely stop
       if (!_musicEnabled) return;
       _currentBgm = 'village'; // Re-set because stopAmbience clears it
-      await _bgmPlayer.setSource(AssetSource('sounds/tavern_music.mp3'));
+      await player.setSource(AssetSource('sounds/tavern_music.mp3'));
       if (!_musicEnabled) {
-        await _bgmPlayer.release();
+        await player.release();
         return;
       }
-      await _bgmPlayer.setVolume(1.0);
-      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-      await _bgmPlayer.resume();
+      await player.setVolume(1.0);
+      await player.setReleaseMode(ReleaseMode.loop);
+      await player.resume();
     } catch (e) {
       debugPrint('BGM Error (Village): $e');
       _currentBgm = ''; // Reset state if failed
@@ -109,19 +141,21 @@ class SoundService {
     if (!_musicEnabled) return;
     if (_currentBgm == 'biome_$biomeId') return; // Already playing
     try {
+      final player = _bgmPlayer;
+      if (player == null) return;
       _currentBgm = 'biome_$biomeId';
       String fileName = 'ambience_biome_$biomeId.mp3';
       await stopAmbience(); // Safely stop
       if (!_musicEnabled) return;
       _currentBgm = 'biome_$biomeId';
-      await _bgmPlayer.setSource(AssetSource('sounds/$fileName'));
+      await player.setSource(AssetSource('sounds/$fileName'));
       if (!_musicEnabled) {
-        await _bgmPlayer.release();
+        await player.release();
         return;
       }
-      await _bgmPlayer.setVolume(1.0);
-      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-      await _bgmPlayer.resume();
+      await player.setVolume(1.0);
+      await player.setReleaseMode(ReleaseMode.loop);
+      await player.resume();
     } catch (e) {
       debugPrint('BGM Error (Biome): $e');
       _currentBgm = ''; // Reset state if failed
@@ -130,17 +164,19 @@ class SoundService {
 
   static Future<void> stopAmbience() async {
     _currentBgm = '';
-    try {
-      await _bgmPlayer.release();
-    } catch (e) {
-      // Ignore audio release errors
+    if (_bgmPlayerInstance != null) {
+      try {
+        await _bgmPlayerInstance!.release();
+      } catch (e) {
+        // Ignore audio release errors
+      }
     }
   }
 
   static void pauseAmbience() async {
-    if (_musicEnabled) {
+    if (_musicEnabled && _bgmPlayerInstance != null) {
       try {
-        await _bgmPlayer.pause();
+        await _bgmPlayerInstance!.pause();
       } catch (e) {
         // Ignore audio pause errors
       }
@@ -148,9 +184,9 @@ class SoundService {
   }
 
   static void resumeAmbience() async {
-    if (_musicEnabled && _currentBgm.isNotEmpty) {
+    if (_musicEnabled && _currentBgm.isNotEmpty && _bgmPlayerInstance != null) {
       try {
-        await _bgmPlayer.resume();
+        await _bgmPlayerInstance!.resume();
       } catch (e) {
         // If resume fails, try playing it directly
         if (_currentBgm == 'village') {

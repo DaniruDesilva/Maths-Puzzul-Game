@@ -30,6 +30,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   final GlobalKey _shareKey = GlobalKey();
   bool _isSharing = false;
+  int? _lastLevelDoubled;
 
   @override
   void initState() {
@@ -471,21 +472,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildFeedbackPill(String message) {
+    final isNoteOrInfo = message.contains('✏️') || message.contains('✍️') || message.contains('Notes') || message.contains('notes');
+    final gradientColors = isNoteOrInfo
+        ? [const Color(0xFFB45309), const Color(0xFF78350F)]
+        : [const Color(0xFFDC2626), const Color(0xFFB91C1C)];
+    final borderColor = isNoteOrInfo ? const Color(0xFFFDE68A) : const Color(0xFFFCA5A5);
+    final glowColor = isNoteOrInfo ? const Color(0xFFF59E0B) : const Color(0xFFEF4444);
+    final iconData = isNoteOrInfo ? Icons.edit_note_rounded : Icons.info_outline_rounded;
+
     return Container(
       key: ValueKey('feedback_$message'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFDC2626),
-            Color(0xFFB91C1C),
-          ],
-        ),
+        gradient: LinearGradient(colors: gradientColors),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+            color: glowColor.withValues(alpha: 0.4),
             blurRadius: 10,
             offset: const Offset(0, 3),
           )
@@ -494,13 +498,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Colors.white, size: 18),
+          Icon(iconData, color: isNoteOrInfo ? const Color(0xFFFDE68A) : Colors.white, size: 18),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               message,
               style: TextStyle(
-                color: Colors.white,
+                color: isNoteOrInfo ? const Color(0xFFFFFBEB) : Colors.white,
                 fontFamily: GoogleFonts.baloo2().fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -709,7 +713,32 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ).animate(delay: 800.ms).fadeIn(duration: 500.ms).slideY(begin: 0.1, curve: Curves.easeOut),
 
-                const SizedBox(height: 24),
+                // 2x Coin Multiplier (Rewarded Ad)
+                if (!isReplay && totalCoins > 0) ...[
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    child: _buildDoubleCoinsButton(
+                      coinsToDouble: totalCoins,
+                      isDoubled: _lastLevelDoubled == provider.currentLevel,
+                      onTap: () {
+                        if (_lastLevelDoubled == provider.currentLevel) return;
+                        AdService.showRewardedAd(
+                          userProvider,
+                          onReward: () {
+                            userProvider.addCoins(totalCoins);
+                            setState(() {
+                              _lastLevelDoubled = provider.currentLevel;
+                            });
+                            SoundService.playSuccess();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 20),
 
                 // Control Buttons
                 Padding(
@@ -834,6 +863,144 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         ),
       ],
     );
+  }
+
+  Widget _buildDoubleCoinsButton({
+    required int coinsToDouble,
+    required bool isDoubled,
+    required VoidCallback onTap,
+  }) {
+    if (isDoubled) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF14532D).withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF22C55E), width: 2),
+          boxShadow: const [
+            BoxShadow(color: Colors.black38, blurRadius: 10, offset: Offset(0, 4)),
+          ],
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Color(0xFFFFD54F), size: 24),
+              const SizedBox(width: 10),
+              Text(
+                'COINS DOUBLED! (+$coinsToDouble)',
+                style: TextStyle(
+                  color: const Color(0xFFFFFBEB),
+                  fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                  fontSize: 16,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFFD54F), width: 2.2),
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF1B5E20), blurRadius: 12, offset: Offset(0, 5)),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD54F),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4),
+                  ],
+                ),
+                child: const Icon(Icons.play_arrow_rounded, color: Color(0xFF1B5E20), size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.videocam_rounded, color: Color(0xFFFFE082), size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            'WATCH AD FOR BONUS',
+                            style: TextStyle(
+                              color: const Color(0xFFFFE082),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              fontFamily: GoogleFonts.baloo2().fontFamily,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'DOUBLE COINS (+$coinsToDouble)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                          fontSize: 17,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD54F),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                  ],
+                ),
+                child: Text(
+                  '2X',
+                  style: TextStyle(
+                    color: const Color(0xFF1B5E20),
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().shimmer(duration: 2.seconds, color: Colors.white24);
   }
 
   Widget _buildControlButton({

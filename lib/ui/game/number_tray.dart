@@ -71,55 +71,93 @@ class MathNumberTray extends StatelessWidget {
     }
     final sortedUniqueNumbers = counts.keys.toList()..sort();
 
-    return Container(
-      height: 74,
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    final isNotes = provider.isNotesMode;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: isNotes ? 6 : 8),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF2A1B10), // Warm workbench oak
-            Color(0xFF191008), // Shadowed cedar
-          ],
+          colors: isNotes
+              ? const [
+                  Color(0xFF332012), // Warm amber wood tone
+                  Color(0xFF1E1208),
+                ]
+              : const [
+                  Color(0xFF2A1B10), // Warm workbench oak
+                  Color(0xFF191008), // Shadowed cedar
+                ],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF5A3C23), // Carved wood border
-          width: 1.8,
+          color: isNotes ? const Color(0xFFF59E0B) : const Color(0xFF5A3C23),
+          width: isNotes ? 2.0 : 1.8,
         ),
         boxShadow: [
+          if (isNotes)
+            BoxShadow(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.28),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
             offset: const Offset(0, 5),
             blurRadius: 10,
           ),
-          const BoxShadow(
-            color: Color(0x22F59E0B),
-            blurRadius: 2,
-            spreadRadius: 0.5,
-          ),
         ],
       ),
-      child: Center(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: sortedUniqueNumbers.map((number) {
-              final count = counts[number]!;
-              final isHintNumber = provider.activeHint != null &&
-                  provider.activeHint!.solutionValue == number;
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isNotes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.edit_note_rounded,
+                    color: Color(0xFFFFD54F),
+                    size: 15,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'PENCIL NOTES ACTIVE • Tap numbers to jot candidates',
+                    style: TextStyle(
+                      color: const Color(0xFFFFD54F),
+                      fontFamily: GoogleFonts.baloo2().fontFamily,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: sortedUniqueNumbers.map((number) {
+                  final count = counts[number]!;
+                  final isHintNumber = provider.activeHint != null &&
+                      provider.activeHint!.solutionValue == number;
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                child: _buildTile(context, number, count, isHintNumber),
-              );
-            }).toList(),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                    child: _buildTile(context, number, count, isHintNumber, isNotes),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -129,6 +167,7 @@ class MathNumberTray extends StatelessWidget {
     int number,
     int count,
     bool isHintNumber,
+    bool isNotes,
   ) {
     return GestureDetector(
       onTap: () => provider.placeNumber(number),
@@ -226,6 +265,38 @@ class MathNumberTray extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     height: 1.1,
                   ),
+                ),
+              ),
+            ),
+
+          // Notes mode pencil indicator badge on candidate tiles
+          if (isNotes)
+            Positioned(
+              left: -4,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFF59E0B),
+                      Color(0xFFD97706),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFFFBEB), width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(0, 1.5),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.edit_rounded,
+                  color: Colors.white,
+                  size: 9.5,
                 ),
               ),
             ),

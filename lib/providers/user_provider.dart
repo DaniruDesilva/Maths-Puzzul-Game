@@ -53,6 +53,49 @@ class UserProvider extends ChangeNotifier {
   // Economy
   int coins = 0;
 
+  // Acorn Vault (Piggy Bank)
+  static const int acornVaultMax = 1500;
+  static const int acornVaultThreshold = 500;
+  int acornVaultCoins = 0;
+  bool get isAcornVaultFull => acornVaultCoins >= acornVaultMax;
+  bool get canCrackAcornVault => acornVaultCoins >= acornVaultThreshold;
+
+  // Daily Village Fortune Wheel / Lucky Spin
+  String? lastFreeSpinDate;
+  int extraSpinsAvailable = 0;
+  bool get canClaimFreeSpin {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return lastFreeSpinDate != today;
+  }
+
+  // Daily Rewarded Ad Spins Limit (Protection against infinite ad abuse)
+  static const int maxDailyAdSpins = 3;
+  String? lastAdSpinDate;
+  int adSpinsClaimedToday = 0;
+
+  int get remainingAdSpinsToday {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    if (lastAdSpinDate != today) {
+      return maxDailyAdSpins;
+    }
+    return (maxDailyAdSpins - adSpinsClaimedToday).clamp(0, maxDailyAdSpins);
+  }
+
+  bool get canClaimAdSpin => remainingAdSpinsToday > 0;
+
+  // Daily Store Rewarded Ads Claim Tracking
+  String? lastDailyCoinsAdDate;
+  bool get canClaimDailyCoinsAd {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return lastDailyCoinsAdDate != today;
+  }
+
+  String? lastDailyHintAdDate;
+  bool get canClaimDailyHintAd {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return lastDailyHintAdDate != today;
+  }
+
   // Village Building Levels (e.g., "Meadow_Bakery": 1)
   Map<String, int> villageBuildings = {};
   
@@ -100,6 +143,16 @@ class UserProvider extends ChangeNotifier {
     bonusJar = _prefs!.getInt('bonus_jar') ?? 0;
     totalBonusWords = _prefs!.getInt('total_bonus_words') ?? 0;
     coins = _prefs!.getInt('coins') ?? 0;
+    acornVaultCoins = _prefs!.getInt('acorn_vault_coins') ?? 0;
+    lastFreeSpinDate = _prefs!.getString('last_free_spin_date');
+    extraSpinsAvailable = _prefs!.getInt('extra_spins_available') ?? 0;
+    lastAdSpinDate = _prefs!.getString('last_ad_spin_date');
+    adSpinsClaimedToday = _prefs!.getInt('ad_spins_claimed_today') ?? 0;
+    lastDailyCoinsAdDate = _prefs!.getString('last_daily_coins_ad_date');
+    lastDailyHintAdDate = _prefs!.getString('last_daily_hint_ad_date');
+    if (_prefs!.getBool('ads_removed') == true) {
+      adsRemoved = true;
+    }
 
     soundEnabled = _prefs!.getBool('setting_sound') ?? true;
     musicEnabled = _prefs!.getBool('setting_music') ?? true;
@@ -186,6 +239,123 @@ class UserProvider extends ChangeNotifier {
     if (_prefs != null) {
       await _prefs!.setBool('starter_coins_awarded', true);
       await _prefs!.setInt('coins', coins);
+    }
+    await _saveUser();
+    notifyListeners();
+  }
+
+  /// Cracks open the Acorn Vault, transferring its contents to the main coin balance
+  int crackAcornVault() {
+    final crackedAmount = acornVaultCoins;
+    if (crackedAmount <= 0) return 0;
+    coins += crackedAmount;
+    acornVaultCoins = 0;
+    if (_prefs != null) {
+      _prefs!.setInt('coins', coins);
+      _prefs!.setInt('acorn_vault_coins', 0);
+    }
+    _saveUser();
+    notifyListeners();
+    return crackedAmount;
+  }
+
+  /// Records that the player claimed their free daily fortune spin
+  void recordFreeSpin() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    lastFreeSpinDate = today;
+    if (_prefs != null) {
+      _prefs!.setString('last_free_spin_date', today);
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('last_free_spin_date', today);
+    });
+    notifyListeners();
+  }
+
+  /// Records a rewarded ad spin and decrements remaining ad spins for today
+  void recordAdSpin() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    if (lastAdSpinDate != today) {
+      lastAdSpinDate = today;
+      adSpinsClaimedToday = 1;
+    } else {
+      adSpinsClaimedToday++;
+    }
+    if (_prefs != null) {
+      _prefs!.setString('last_ad_spin_date', today);
+      _prefs!.setInt('ad_spins_claimed_today', adSpinsClaimedToday);
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('last_ad_spin_date', today);
+      prefs.setInt('ad_spins_claimed_today', adSpinsClaimedToday);
+    });
+    notifyListeners();
+  }
+
+  /// Records daily store coins ad claim (50 coins)
+  void recordDailyCoinsAdClaim() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    lastDailyCoinsAdDate = today;
+    if (_prefs != null) {
+      _prefs!.setString('last_daily_coins_ad_date', today);
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('last_daily_coins_ad_date', today);
+    });
+    notifyListeners();
+  }
+
+  /// Records daily store hint ad claim (1 hint)
+  void recordDailyHintAdClaim() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    lastDailyHintAdDate = today;
+    if (_prefs != null) {
+      _prefs!.setString('last_daily_hint_ad_date', today);
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('last_daily_hint_ad_date', today);
+    });
+    notifyListeners();
+  }
+
+  /// Adds extra fortune spins (e.g., from watching rewarded ads)
+  void addExtraSpin([int count = 1]) {
+    extraSpinsAvailable += count;
+    if (_prefs != null) {
+      _prefs!.setInt('extra_spins_available', extraSpinsAvailable);
+    }
+    notifyListeners();
+  }
+
+  /// Consumes an extra fortune spin if available
+  bool useExtraSpin() {
+    if (extraSpinsAvailable > 0) {
+      extraSpinsAvailable--;
+      if (_prefs != null) {
+        _prefs!.setInt('extra_spins_available', extraSpinsAvailable);
+      }
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  /// Whether the user has purchased the Welcome Acorn Starter Pack ($0.99)
+  bool get hasPurchasedWelcomePack => _prefs?.getBool('has_purchased_welcome_pack') ?? false;
+
+  /// Purchases the Welcome Acorn Starter Pack (1000 Coins + 10 Hints + 2 Mega + 1 Ultra)
+  Future<void> purchaseWelcomePack() async {
+    if (hasPurchasedWelcomePack) return;
+    coins += 1000;
+    hintsRegular += 10;
+    hintsMega += 2;
+    hintsUltra += 1;
+    if (_prefs != null) {
+      await _prefs!.setBool('has_purchased_welcome_pack', true);
+      await _prefs!.setInt('coins', coins);
+      await _prefs!.setInt('hints_regular', hintsRegular);
+      await _prefs!.setInt('hints_mega', hintsMega);
+      await _prefs!.setInt('hints_ultra', hintsUltra);
     }
     await _saveUser();
     notifyListeners();
@@ -396,6 +566,10 @@ class UserProvider extends ChangeNotifier {
 
   void addEquationSolved([int count = 1]) {
     wordsFound += count;
+    acornVaultCoins = (acornVaultCoins + count * 5).clamp(0, acornVaultMax);
+    if (_prefs != null) {
+      _prefs!.setInt('acorn_vault_coins', acornVaultCoins);
+    }
     _saveUser();
     notifyListeners();
   }
@@ -590,6 +764,8 @@ class UserProvider extends ChangeNotifier {
       await _prefs!.setInt('hints_mega', hintsMega);
       await _prefs!.setInt('hints_ultra', hintsUltra);
       await _prefs!.setInt('words_found', wordsFound);
+      await _prefs!.setInt('acorn_vault_coins', acornVaultCoins);
+      await _prefs!.setBool('ads_removed', adsRemoved);
     }
   }
 }

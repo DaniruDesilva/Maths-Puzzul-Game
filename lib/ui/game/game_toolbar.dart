@@ -95,6 +95,7 @@ class MathGameToolbar extends StatelessWidget {
                   : const Color(0xFF64748B),
               accentColor: const Color(0xFFFBBF24),
               onTap: () => provider.toggleNotesMode(),
+              onLongPress: () => _showNotesHelpSheet(context),
             ),
           ),
 
@@ -110,6 +111,196 @@ class MathGameToolbar extends StatelessWidget {
               isSuperHighlight: true,
               onTap: () => _handleHintTap(context, user),
               onLongPress: () => _showHintPowerUpSheet(context, user),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotesHelpSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1C130B),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 25,
+                offset: Offset(0, -6),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Modal Handle
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Header Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.edit_note_rounded, color: Color(0xFFFBBF24), size: 24),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'HOW NOTES (PENCIL) MODE WORKS',
+                            style: GoogleFonts.lilitaOne(
+                              fontSize: 18,
+                              letterSpacing: 1.1,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  Text(
+                    'Notes Mode lets you pencil in temporary candidate numbers on blank tiles when testing possibilities!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.baloo2(
+                      color: const Color(0xFFD1D5DB),
+                      fontSize: 13,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildNotesStepCard(
+                    '1',
+                    'Turn Notes ON',
+                    'Tap the "Notes" button on the toolbar to activate pencil mode (badge switches to ON).',
+                    Icons.toggle_on_rounded,
+                    const Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildNotesStepCard(
+                    '2',
+                    'Pencil Candidates',
+                    'Select any empty tile, then tap numbers from your tray. They appear as small notes without using up your numbers.',
+                    Icons.edit_rounded,
+                    const Color(0xFF38BDF8),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildNotesStepCard(
+                    '3',
+                    'Place Final Number',
+                    'When sure of your answer, toggle Notes OFF and tap your number to firmly place it onto the board!',
+                    Icons.check_circle_rounded,
+                    const Color(0xFF10B981),
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF59E0B),
+                        foregroundColor: const Color(0xFF3B1D00),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: Text(
+                        'GOT IT, LET\'S PLAY!',
+                        style: GoogleFonts.lilitaOne(
+                          fontSize: 16,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNotesStepCard(
+    String stepNum,
+    String title,
+    String desc,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF26190F),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 1.2),
+            ),
+            child: Text(
+              stepNum,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.lilitaOne(
+                    color: color,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  desc,
+                  style: GoogleFonts.baloo2(
+                    color: const Color(0xFFE2E8F0),
+                    fontSize: 12,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

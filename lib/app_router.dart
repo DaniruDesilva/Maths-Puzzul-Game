@@ -43,7 +43,8 @@ class AppRouter {
         page = const AchievementScreen();
         break;
       case store:
-        page = const StoreScreen();
+        final initialCategory = settings.arguments as String?;
+        page = StoreScreen(initialCategory: initialCategory);
         break;
       case customPuzzle:
         page = const CustomPuzzleScreen();

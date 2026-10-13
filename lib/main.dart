@@ -6,6 +6,7 @@ import 'providers/game_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/notification_service.dart';
 import 'services/sound_service.dart';
+import 'services/ad_service.dart';
 import 'app_router.dart';
 
 void main() async {
@@ -14,6 +15,7 @@ void main() async {
   await NotificationService.initialize();
   await NotificationService.scheduleDailyReminder();
   await SoundService.init();
+  AdService.initialize();
 
   // Lock to portrait mode for best mobile experience
   await SystemChrome.setPreferredOrientations([

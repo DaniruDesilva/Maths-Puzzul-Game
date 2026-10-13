@@ -125,6 +125,7 @@ class MathBoardView extends StatelessWidget {
                         isInViolatedEquation: inViolated,
                         isInSatisfiedEquation: inSatisfied,
                         notes: cellNotes,
+                        isNotesMode: provider.isNotesMode,
                         size: baseCellSize,
                         onTap: () => provider.selectCell(r, c),
                       ),

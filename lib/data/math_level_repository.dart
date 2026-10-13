@@ -16,7 +16,9 @@ class MathLevelRepository {
     if (_cachedCampaign != null || _isLoading) return;
     _isLoading = true;
     try {
-      final jsonString = await rootBundle.loadString('assets/levels/campaign_v1.json');
+      final jsonString = await rootBundle
+          .loadString('assets/levels/campaign_v1.json')
+          .timeout(const Duration(milliseconds: 300));
       final list = jsonDecode(jsonString) as List;
       _cachedCampaign = list.map((item) => MathPuzzle.fromJson(item as Map<String, dynamic>)).toList();
     } catch (_) {

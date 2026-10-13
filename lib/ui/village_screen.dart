@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flame/game.dart';
@@ -12,6 +13,8 @@ import '../services/sound_service.dart';
 
 import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
+import 'village/overlays/fortune_wheel_dialog.dart';
+import 'village/overlays/acorn_vault_dialog.dart';
 
 class VillageScreen extends StatefulWidget {
   final VillageDef village;
@@ -108,174 +111,289 @@ class _VillageScreenState extends State<VillageScreen> {
           // Flutter Top UI Overlay
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Top Left: Back Button (if !isRoot) OR Player Stats / Settings (if isRoot)
-                  if (!widget.isRoot)
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD7CCC8),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF5D4037), width: 3),
-                          boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                        ),
-                        child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF5D4037)),
-                      ),
-                    )
-                  else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Consumer<UserProvider>(
-                          builder: (context, user, child) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFDF5E6),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
-                                boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF7CB342),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.psychology, color: Colors.white, size: 24),
-                                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.1, duration: 1.seconds),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user.isLoading ? '...' : '${user.brainSize}cc',
-                                        style: TextStyle(
-                                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                          color: const Color(0xFF5D4037),
-                                          fontSize: 22,
-                                          height: 1.0,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        user.isLoading ? '...' : 'Level ${user.currentLevel}',
-                                        style: TextStyle(
-                                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                          color: const Color(0xFF8B5A2B),
-                                          fontSize: 14,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        ),
-                        
-                        // Settings Button
-                        const SizedBox(height: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: math.max(MediaQuery.of(context).size.width - 20, 360),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top Left: Back Button (if !isRoot) OR Player Stats / Settings (if isRoot)
+                      if (!widget.isRoot)
                         GestureDetector(
-                          onTap: () => _showSettingsDialog(context),
+                          onTap: () => Navigator.pop(context),
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF5D4037),
+                              color: const Color(0xFFD7CCC8),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
+                              border: Border.all(color: const Color(0xFF5D4037), width: 2.5),
                               boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
                             ),
-                            child: const Icon(Icons.settings_rounded, color: Color(0xFFFFD54F), size: 22),
+                            child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF5D4037), size: 22),
                           ),
-                        ),
-                      ],
-                    ),
-                  
-                  // Top Right: Currency & Helpers (Coins ONLY if !isRoot)
-                  Consumer<UserProvider>(
-                    builder: (context, user, child) {
-                      if (!widget.isRoot) {
-                        return _buildTopBadge(
-                          Icons.monetization_on_rounded,
-                          '${user.coins}',
-                          const Color(0xFFFFD54F),
-                        );
-                      }
+                        )
+                      else
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Consumer<UserProvider>(
+                              builder: (context, user, child) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDF5E6),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                    boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF7CB342),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.psychology, color: Colors.white, size: 22),
+                                      ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.1, duration: 1.seconds),
+                                      const SizedBox(width: 10),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            user.isLoading ? '...' : '${user.brainSize}cc',
+                                            style: TextStyle(
+                                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                              color: const Color(0xFF5D4037),
+                                              fontSize: 20,
+                                              height: 1.0,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            user.isLoading ? '...' : 'Level ${user.currentLevel}',
+                                            style: TextStyle(
+                                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                              color: const Color(0xFF8B5A2B),
+                                              fontSize: 13,
+                                              letterSpacing: 1,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            ),
+                            
+                            // Quick Action Buttons Row (Settings, Fortune Wheel, Acorn Vault)
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                // Settings Button
+                                GestureDetector(
+                                  onTap: () => _showSettingsDialog(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5D4037),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                                    ),
+                                    child: const Icon(Icons.settings_rounded, color: Color(0xFFFFD54F), size: 20),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
 
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
+                                // Daily Fortune Wheel Button
+                                Consumer<UserProvider>(
+                                  builder: (context, user, _) {
+                                    final canSpin = user.canClaimFreeSpin;
+                                    return Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => FortuneWheelDialog(user: user),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF5D4037),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: canSpin ? const Color(0xFFFFD54F) : const Color(0xFF8B5A2B),
+                                                width: 2.5,
+                                              ),
+                                              boxShadow: const [
+                                                BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4),
+                                              ],
+                                            ),
+                                            child: const _FortuneWheelMiniIcon(size: 20),
+                                          ),
+                                        ),
+                                        if (canSpin)
+                                          Positioned(
+                                            top: -2,
+                                            right: -2,
+                                            child: Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE53935),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: Colors.white, width: 2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+
+                                // Acorn Piggy Bank Button
+                                Consumer<UserProvider>(
+                                  builder: (context, user, _) {
+                                    final canCrack = user.canCrackAcornVault;
+                                    return Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AcornVaultDialog(user: user),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF5D4037),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: canCrack ? const Color(0xFF7CB342) : const Color(0xFF8B5A2B),
+                                                width: 2.5,
+                                              ),
+                                              boxShadow: const [
+                                                BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4),
+                                              ],
+                                            ),
+                                            child: const Icon(Icons.savings_rounded, color: Color(0xFFFFD54F), size: 20),
+                                          ),
+                                        ),
+                                        if (canCrack)
+                                          Positioned(
+                                            top: -2,
+                                            right: -2,
+                                            child: Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF7CB342),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: Colors.white, width: 2),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      
+                      // Top Right: Currency & Helpers (Coins ONLY if !isRoot)
+                      Consumer<UserProvider>(
+                        builder: (context, user, child) {
+                          if (!widget.isRoot) {
+                            return _buildTopBadge(
+                              Icons.monetization_on_rounded,
+                              '${user.coins}',
+                              const Color(0xFFFFD54F),
+                              showAddIcon: true,
+                              onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'coins'),
+                            );
+                          }
+
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Create Button
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, AppRouter.customPuzzle),
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF5D4037), // Dark brown background
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
-                                    boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                              Column(
+                                children: [
+                                  // Create Button
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, AppRouter.customPuzzle),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF5D4037),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                                      ),
+                                      child: const Icon(Icons.brush_rounded, color: Color(0xFFFFD54F), size: 20),
+                                    ),
                                   ),
-                                  child: const Icon(Icons.brush_rounded, color: Color(0xFFFFD54F), size: 22), // Gold icon
-                                ),
+                                  const SizedBox(height: 8),
+                                  // Achievements Button
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, AppRouter.achievements),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF5D4037),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                                      ),
+                                      child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F), size: 20),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              // Achievements Button
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, AppRouter.achievements),
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF5D4037), // Dark brown background
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
-                                    boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  // Store / Hints Button
+                                  _buildTopBadge(
+                                    Icons.lightbulb_rounded,
+                                    user.isLoading ? '...' : '${user.hintsRegular}',
+                                    const Color(0xFFF2C94C),
+                                    showAddIcon: true,
+                                    onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'hints'),
                                   ),
-                                  child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F), size: 22), // Gold icon
-                                ),
+                                  const SizedBox(height: 8),
+                                  // Coins Badge - Now directly opens Store on Coins tab!
+                                  _buildTopBadge(
+                                    Icons.monetization_on_rounded,
+                                    user.isLoading ? '...' : '${user.coins}',
+                                    const Color(0xFFFFD54F),
+                                    showAddIcon: true,
+                                    onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'coins'),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              // Store / Hints Button
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, AppRouter.store),
-                                child: _buildTopBadge(
-                                  Icons.lightbulb_rounded,
-                                  user.isLoading ? '...' : '${user.hintsRegular}',
-                                  const Color(0xFFF2C94C),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Coins Badge
-                              _buildTopBadge(
-                                Icons.monetization_on_rounded,
-                                user.isLoading ? '...' : '${user.coins}',
-                                const Color(0xFFFFD54F),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    }
+                          );
+                        }
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -291,76 +409,85 @@ class _VillageScreenState extends State<VillageScreen> {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Map Button
-                        _buildSideButton(
-                          icon: Icons.map_rounded, 
-                          color: const Color(0xFF8B5A2B), 
-                          onTap: () => Navigator.pushNamed(context, AppRouter.biomeMap)
-                        ),
-                        
-                        // Massive Center Play Button
-                        GestureDetector(
-                          onTap: () {
-                            var provider = Provider.of<GameProvider>(context, listen: false);
-                            provider.startSpecificLevel(user.levelsCompleted + 1);
-                            Navigator.pushNamed(context, AppRouter.game);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7CB342),
-                              borderRadius: BorderRadius.circular(32),
-                              border: Border.all(color: const Color(0xFF33691E), width: 4),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 10)),
-                                BoxShadow(color: Color(0xFFAED581), spreadRadius: -4), // Inner highlight
-                              ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.bottomCenter,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // Map Button
+                            _buildSideButton(
+                              icon: Icons.map_rounded, 
+                              color: const Color(0xFF8B5A2B), 
+                              onTap: () => Navigator.pushNamed(context, AppRouter.biomeMap)
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'PLAY',
-                                  style: TextStyle(
-                                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                    fontSize: 28, 
-                                    color: Colors.white,
-                                    letterSpacing: 2,
-                                    shadows: const [
-                                      Shadow(color: Colors.black45, offset: Offset(0, 3), blurRadius: 3),
-                                    ],
-                                  ),
+                            const SizedBox(width: 14),
+                            
+                            // Massive Center Play Button
+                            GestureDetector(
+                              onTap: () {
+                                var provider = Provider.of<GameProvider>(context, listen: false);
+                                provider.startSpecificLevel(user.levelsCompleted + 1);
+                                Navigator.pushNamed(context, AppRouter.game);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF7CB342),
+                                  borderRadius: BorderRadius.circular(32),
+                                  border: Border.all(color: const Color(0xFF33691E), width: 4),
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 10)),
+                                    BoxShadow(color: Color(0xFFAED581), spreadRadius: -4), // Inner highlight
+                                  ],
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'PLAY',
+                                      style: TextStyle(
+                                        fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                        fontSize: 28, 
+                                        color: Colors.white,
+                                        letterSpacing: 2,
+                                        shadows: const [
+                                          Shadow(color: Colors.black45, offset: Offset(0, 3), blurRadius: 3),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(begin: 1.0, end: 1.05, duration: 1.5.seconds, curve: Curves.easeInOut),
                             ),
-                          ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(begin: 1.0, end: 1.05, duration: 1.5.seconds, curve: Curves.easeInOut),
+                            const SizedBox(width: 14),
+                            
+                            // Daily Challenge Button
+                            _buildSideButton(
+                              icon: Icons.calendar_month_rounded, 
+                              color: const Color(0xFF8B5A2B), 
+                              onTap: user.canPlayDailyChallenge() ? () {
+                                var provider = Provider.of<GameProvider>(context, listen: false);
+                                provider.startDailyChallenge();
+                                Navigator.pushNamed(context, AppRouter.game);
+                              } : () {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: const Text('Come back tomorrow for a new Daily Challenge!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: const Color(0xFF8B5A2B),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                ));
+                              },
+                              hasNotification: user.canPlayDailyChallenge(),
+                            ),
+                          ],
                         ),
-                        
-                        // Daily Challenge Button
-                        _buildSideButton(
-                          icon: Icons.calendar_month_rounded, 
-                          color: const Color(0xFF8B5A2B), 
-                          onTap: user.canPlayDailyChallenge() ? () {
-                            var provider = Provider.of<GameProvider>(context, listen: false);
-                            provider.startDailyChallenge();
-                            Navigator.pushNamed(context, AppRouter.game);
-                          } : () {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: const Text('Come back tomorrow for a new Daily Challenge!'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: const Color(0xFF8B5A2B),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ));
-                          },
-                          hasNotification: user.canPlayDailyChallenge(),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 );
@@ -372,31 +499,56 @@ class _VillageScreenState extends State<VillageScreen> {
     );
   }
 
-  Widget _buildTopBadge(IconData icon, String value, Color iconColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+  Widget _buildTopBadge(
+    IconData icon, 
+    String value, 
+    Color iconColor, {
+    bool showAddIcon = false,
+    VoidCallback? onTap,
+  }) {
+    Widget badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFFDF5E6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
         boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: 6),
+          Icon(icon, color: iconColor, size: 18),
+          const SizedBox(width: 5),
           Text(
             value,
             style: TextStyle(
               fontFamily: GoogleFonts.lilitaOne().fontFamily,
               color: const Color(0xFF5D4037), 
-              fontSize: 18,
+              fontSize: 16,
             ),
           ),
+          if (showAddIcon) ...[
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: Color(0xFF7CB342),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 13),
+            ),
+          ],
         ],
       ),
     );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: badge,
+      );
+    }
+    return badge;
   }
 
   Widget _buildSideButton({required IconData icon, required Color color, required VoidCallback? onTap, bool hasNotification = false}) {
@@ -600,3 +752,97 @@ class _VillageScreenState extends State<VillageScreen> {
     );
   }
 }
+
+class _FortuneWheelMiniIcon extends StatelessWidget {
+  final double size;
+  const _FortuneWheelMiniIcon({this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        size: Size(size, size),
+        painter: _MiniWheelPainter(),
+      ),
+    );
+  }
+}
+
+class _MiniWheelPainter extends CustomPainter {
+  static const List<Color> _sectorColors = [
+    Color(0xFFFFB300), // Amber Gold
+    Color(0xFF2E7D32), // Forest Green
+    Color(0xFF0288D1), // Cyan/Blue
+    Color(0xFFE65100), // Deep Orange
+    Color(0xFF7B1FA2), // Royal Purple
+    Color(0xFFD32F2F), // Bright Red
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final sweepAngle = (2 * math.pi) / _sectorColors.length;
+
+    final wedgePaint = Paint()..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = const Color(0xFFFFF9C4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9;
+
+    // Draw 6 colorful wheel sectors
+    for (int i = 0; i < _sectorColors.length; i++) {
+      wedgePaint.color = _sectorColors[i];
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        i * sweepAngle,
+        sweepAngle,
+        true,
+        wedgePaint,
+      );
+      final x = center.dx + radius * math.cos(i * sweepAngle);
+      final y = center.dy + radius * math.sin(i * sweepAngle);
+      canvas.drawLine(center, Offset(x, y), linePaint);
+    }
+
+    // Outer golden rim
+    final rimPaint = Paint()
+      ..color = const Color(0xFFFFD54F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawCircle(center, radius - 0.75, rimPaint);
+
+    // Center golden pin / hub
+    final hubPaint = Paint()
+      ..color = const Color(0xFFFFD54F)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius * 0.28, hubPaint);
+    final hubBorderPaint = Paint()
+      ..color = const Color(0xFF5D4037)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9;
+    canvas.drawCircle(center, radius * 0.28, hubBorderPaint);
+
+    // Top pointer needle at 12 o'clock
+    final pointerPath = Path()
+      ..moveTo(center.dx, radius * 0.42) // Needle tip points down toward center
+      ..lineTo(center.dx - radius * 0.24, 0)
+      ..lineTo(center.dx + radius * 0.24, 0)
+      ..close();
+    final pointerPaint = Paint()
+      ..color = const Color(0xFFFFF59D)
+      ..style = PaintingStyle.fill;
+    final pointerBorder = Paint()
+      ..color = const Color(0xFF3E2723)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.7;
+    canvas.drawPath(pointerPath, pointerPaint);
+    canvas.drawPath(pointerPath, pointerBorder);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+

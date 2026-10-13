@@ -11,6 +11,7 @@ class BoardCellWidget extends StatelessWidget {
   final bool isInViolatedEquation;
   final bool isInSatisfiedEquation;
   final Set<int>? notes;
+  final bool isNotesMode;
   final VoidCallback? onTap;
   final double size;
 
@@ -24,6 +25,7 @@ class BoardCellWidget extends StatelessWidget {
     this.isInViolatedEquation = false,
     this.isInSatisfiedEquation = false,
     this.notes,
+    this.isNotesMode = false,
     this.onTap,
     this.size = 52.0,
   });
@@ -382,11 +384,21 @@ class BoardCellWidget extends StatelessWidget {
   Widget _buildNotesGrid() {
     if (notes == null || notes!.isEmpty) {
       if (isSelected) {
-        // Subtle dotted target indicator when selected but empty
+        if (isNotesMode) {
+          // Distinct glowing pencil indicator when focused in Notes mode!
+          return Center(
+            child: Icon(
+              Icons.edit_rounded,
+              color: const Color(0xFFFFD54F),
+              size: size * 0.40,
+            ),
+          );
+        }
+        // Subtle dotted target indicator when focused in normal placement mode
         return Center(
           child: Container(
-            width: size * 0.25,
-            height: size * 0.25,
+            width: size * 0.22,
+            height: size * 0.22,
             decoration: const BoxDecoration(
               color: Color(0x66FFD54F),
               shape: BoxShape.circle,
@@ -398,27 +410,37 @@ class BoardCellWidget extends StatelessWidget {
     }
 
     final sortedNotes = notes!.toList()..sort();
-    return Padding(
-      padding: EdgeInsets.all(size * 0.08),
+    return Container(
+      padding: EdgeInsets.all(size * 0.06),
+      alignment: Alignment.center,
       child: Wrap(
-        spacing: 2,
-        runSpacing: 1,
+        spacing: 3,
+        runSpacing: 2,
         alignment: WrapAlignment.center,
-        children: sortedNotes
-            .take(6)
-            .map(
-              (n) => Text(
-                '$n',
-                style: TextStyle(
-                  color: const Color(0xFFE2E8F0),
-                  fontFamily: GoogleFonts.baloo2().fontFamily,
-                  fontSize: size * 0.24,
-                  fontWeight: FontWeight.w800,
-                  height: 1.0,
-                ),
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: sortedNotes.take(4).map((n) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFF452B14).withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: const Color(0xFFFFD54F).withValues(alpha: 0.8),
+                width: 0.8,
               ),
-            )
-            .toList(),
+            ),
+            child: Text(
+              '$n',
+              style: TextStyle(
+                color: const Color(0xFFFFFBEB),
+                fontFamily: GoogleFonts.baloo2().fontFamily,
+                fontSize: size * 0.22,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

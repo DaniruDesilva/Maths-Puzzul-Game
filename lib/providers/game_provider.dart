@@ -66,8 +66,14 @@ class GameProvider extends ChangeNotifier {
   // Level completion callback
   VoidCallback? onLevelCompleteCallback;
 
-  GameProvider() {
-    _init();
+  GameProvider({MathPuzzle? initialPuzzle}) {
+    if (initialPuzzle != null) {
+      currentPuzzle = initialPuzzle;
+      isLoading = false;
+      _resetLevelState();
+    } else {
+      _init();
+    }
   }
 
   Future<void> _init() async {
@@ -176,7 +182,7 @@ class GameProvider extends ChangeNotifier {
     _startCurrentLevel();
   }
 
-  void startCustomSeed(String seedCode) {
+  bool startCustomSeed(String seedCode) {
     isCustomPuzzle = true;
     isDailyChallenge = false;
     final puzzle = MathLevelRepository.getFromSeedCode(seedCode);
@@ -184,7 +190,9 @@ class GameProvider extends ChangeNotifier {
       currentPuzzle = puzzle;
       _resetLevelState();
       notifyListeners();
+      return true;
     }
+    return false;
   }
 
   void startCustomLevel([List<String>? words]) {
@@ -224,6 +232,11 @@ class GameProvider extends ChangeNotifier {
   void toggleNotesMode() {
     isNotesMode = !isNotesMode;
     SoundService.playClick();
+    if (isNotesMode) {
+      showFeedback('✏️ Notes Mode ON: Tap tray numbers to pencil candidates!', durationMs: 2500);
+    } else {
+      showFeedback('✍️ Placement Mode: Tap numbers to place onto board', durationMs: 1800);
+    }
     notifyListeners();
   }
 
@@ -249,6 +262,11 @@ class GameProvider extends ChangeNotifier {
     final key = '$r,$c';
 
     if (isNotesMode) {
+      if (currentValues[r][c] != null) {
+        showFeedback('Clear placed number with Erase to add notes!', durationMs: 2000);
+        return;
+      }
+
       // Toggle note candidate
       final notes = Set<int>.from(cellNotes[key] ?? {});
       final prevNotes = Set<int>.from(notes);

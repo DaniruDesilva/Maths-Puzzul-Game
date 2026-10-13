@@ -73,6 +73,32 @@ void main() {
       expect(provider.cellNotes[key]?.contains(7) ?? false, isFalse);
     });
 
+    test('Notes mode prevents adding notes to already filled cell', () async {
+      final provider = GameProvider();
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      final targetCell = provider.selectedCell!;
+      final key = '${targetCell.x},${targetCell.y}';
+      final numberToPlace = provider.availableTray.first;
+
+      // Place number normally
+      provider.placeNumber(numberToPlace);
+      expect(provider.currentValues[targetCell.x][targetCell.y], equals(numberToPlace));
+
+      // Now turn Notes mode ON and select the filled cell
+      provider.toggleNotesMode();
+      expect(provider.isNotesMode, isTrue);
+      expect(provider.feedbackMessage, contains('Notes Mode ON'));
+
+      provider.selectCell(targetCell.x, targetCell.y);
+
+      // Tapping number on filled cell should show feedback and not corrupt notes
+      provider.placeNumber(99);
+      expect(provider.currentValues[targetCell.x][targetCell.y], equals(numberToPlace));
+      expect(provider.cellNotes[key], isNull);
+      expect(provider.feedbackMessage, contains('Clear placed number'));
+    });
+
     test('Smart Hint deductions work and can be applied', () async {
       final provider = GameProvider();
       await Future.delayed(const Duration(milliseconds: 50));
