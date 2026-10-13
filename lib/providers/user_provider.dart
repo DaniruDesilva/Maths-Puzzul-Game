@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/database_helper.dart';
 import '../services/sound_service.dart';
+import '../services/purchase_service.dart';
 import 'package:vibration/vibration.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -129,6 +130,12 @@ class UserProvider extends ChangeNotifier {
       await _loadUser();
     } catch (e) {
       debugPrint('Database load error: $e');
+    }
+
+    try {
+      await PurchaseService.initialize(this);
+    } catch (e) {
+      debugPrint('PurchaseService init error: $e');
     } finally {
       isLoading = false;
       if (!_initCompleter.isCompleted) {

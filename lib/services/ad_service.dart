@@ -9,7 +9,7 @@ class AdService {
   static int _numRewardedLoadAttempts = 0;
   static int _numInterstitialLoadAttempts = 0;
 
-  static const String _releaseRewardedId = '<YOUR_REWARDED_AD_UNIT_ID>';
+  static const String _releaseRewardedId = 'ca-app-pub-5105772344719492/4852062846';
   static const String _testRewardedId = 'ca-app-pub-3940256099942544/5224354917';
 
   static String get rewardedAdUnitId {
@@ -19,7 +19,7 @@ class AdService {
     return _testRewardedId;
   }
 
-  static const String _releaseInterstitialId = '<YOUR_INTERSTITIAL_AD_UNIT_ID>';
+  static const String _releaseInterstitialId = 'ca-app-pub-5105772344719492/6760785749';
   static const String _testInterstitialId = 'ca-app-pub-3940256099942544/1033173712';
 
   static String get interstitialAdUnitId {

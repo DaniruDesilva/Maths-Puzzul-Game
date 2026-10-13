@@ -35,10 +35,10 @@
             android:name="flutterEmbedding"
             android:value="2" />
         
-        <!-- Google Mobile Ads Application ID (Test ID used here) -->
+        <!-- Google Mobile Ads Application ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-5105772344719492~8039489656"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

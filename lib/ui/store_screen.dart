@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/user_provider.dart';
 import '../services/ad_service.dart';
 import '../services/sound_service.dart';
+import '../services/purchase_service.dart';
 import 'village/overlays/acorn_vault_dialog.dart';
 
 enum StoreCategory { all, coins, hints, bundles }
@@ -90,6 +91,26 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
+  void _buyProduct({
+    required BuildContext context,
+    required UserProvider user,
+    required String productId,
+    required String title,
+    required VoidCallback onGranted,
+  }) {
+    PurchaseService.purchase(
+      context: context,
+      productId: productId,
+      title: title,
+      user: user,
+      onRewardGranted: () {
+        SoundService.playSuccess();
+        onGranted();
+        _showMockPurchase(context, title);
+      },
+    );
+  }
+
   void _showMockPurchase(BuildContext context, String item) {
     SoundService.playSuccess();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -100,7 +121,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Purchased: $item! (Mock IAP)',
+                'Purchased: $item!',
                 style: TextStyle(
                   fontFamily: GoogleFonts.lilitaOne().fontFamily,
                   fontSize: 16,
@@ -139,6 +160,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Restore Purchases',
+            icon: const Icon(Icons.restore_rounded, color: Color(0xFFFFD54F), size: 26),
+            onPressed: () {
+              final user = Provider.of<UserProvider>(context, listen: false);
+              PurchaseService.restorePurchases(context: context, user: user);
+            },
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
       body: Consumer<UserProvider>(
         builder: (context, user, child) {
@@ -222,10 +254,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
-                        onTap: () {
-                          user.addCoins(250);
-                          _showMockPurchase(context, '250 Coins');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCoins250,
+                          title: '250 Coins',
+                          onGranted: () => user.addCoins(250),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -239,10 +274,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
-                        onTap: () {
-                          user.addCoins(750);
-                          _showMockPurchase(context, '750 Coins');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCoins750,
+                          title: '750 Coins',
+                          onGranted: () => user.addCoins(750),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -259,10 +297,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFFFB74D),
                         buttonShadow: const Color(0xFFB95000),
                         isFeatured: true,
-                        onTap: () {
-                          user.addCoins(2000);
-                          _showMockPurchase(context, '2,000 Coins');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCoins2000,
+                          title: '2,000 Coins',
+                          onGranted: () => user.addCoins(2000),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -279,10 +320,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFF48FB1),
                         buttonShadow: const Color(0xFF880E4F),
                         isFeatured: true,
-                        onTap: () {
-                          user.addCoins(5000);
-                          _showMockPurchase(context, '5,000 Coins');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCoins5000,
+                          title: '5,000 Coins',
+                          onGranted: () => user.addCoins(5000),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -299,10 +343,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFBA68C8),
                         buttonShadow: const Color(0xFF4A148C),
                         isPremium: true,
-                        onTap: () {
-                          user.addCoins(12000);
-                          _showMockPurchase(context, '12,000 Coins');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCoins12000,
+                          title: '12,000 Coins',
+                          onGranted: () => user.addCoins(12000),
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -356,10 +403,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
-                        onTap: () {
-                          user.addHint(10);
-                          _showMockPurchase(context, '10 Regular Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productHints10,
+                          title: '10 Regular Hints',
+                          onGranted: () => user.addHint(10),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -368,17 +418,20 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         title: '30 Regular Hints',
                         description: 'Steady solver pack for difficult campaign levels.',
                         icon: Icons.lightbulb_rounded,
-                        iconColor: const Color(0xFFFFD54F),
+                        iconColor: const Color(0xFFFFB74D),
                         badgeText: 'POPULAR',
                         badgeColor: const Color(0xFFF57C00),
                         buttonText: '\$1.99',
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
-                        onTap: () {
-                          user.addHint(30);
-                          _showMockPurchase(context, '30 Regular Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productHints30,
+                          title: '30 Regular Hints',
+                          onGranted: () => user.addHint(30),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -395,10 +448,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFF81C784),
                         buttonShadow: const Color(0xFF1B5E20),
                         isFeatured: true,
-                        onTap: () {
-                          user.addHint(75);
-                          _showMockPurchase(context, '75 Regular Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: 'hints_75',
+                          title: '75 Regular Hints',
+                          onGranted: () => user.addHint(75),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -414,10 +470,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonColor: const Color(0xFFF57F17),
                         buttonHighlight: const Color(0xFFFFEE58),
                         buttonShadow: const Color(0xFFBC5100),
-                        onTap: () {
-                          user.addMegaHint(5);
-                          _showMockPurchase(context, '5 Mega Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productHintsMega10,
+                          title: '5 Mega Hints',
+                          onGranted: () => user.addMegaHint(5),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -434,10 +493,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFFFB74D),
                         buttonShadow: const Color(0xFFAC1900),
                         isFeatured: true,
-                        onTap: () {
-                          user.addMegaHint(15);
-                          _showMockPurchase(context, '15 Mega Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: 'hints_mega_15',
+                          title: '15 Mega Hints',
+                          onGranted: () => user.addMegaHint(15),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -453,10 +515,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonColor: const Color(0xFF00ACC1),
                         buttonHighlight: const Color(0xFF4DD0E1),
                         buttonShadow: const Color(0xFF006064),
-                        onTap: () {
-                          user.addUltraHint(3);
-                          _showMockPurchase(context, '3 Ultra Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productHintsUltra5,
+                          title: '3 Ultra Hints',
+                          onGranted: () => user.addUltraHint(3),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -473,10 +538,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFF4DD0E1),
                         buttonShadow: const Color(0xFF004D40),
                         isPremium: true,
-                        onTap: () {
-                          user.addUltraHint(8);
-                          _showMockPurchase(context, '8 Ultra Hints');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: 'hints_ultra_8',
+                          title: '8 Ultra Hints',
+                          onGranted: () => user.addUltraHint(8),
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -508,10 +576,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         isFeatured: !user.hasPurchasedWelcomePack,
                         onTap: user.hasPurchasedWelcomePack
                             ? null
-                            : () {
-                                user.purchaseWelcomePack();
-                                _showMockPurchase(context, 'Welcome Acorn Pack');
-                              },
+                            : () => _buyProduct(
+                                context: context,
+                                user: user,
+                                productId: PurchaseService.productWelcomePack,
+                                title: 'Welcome Acorn Pack',
+                                onGranted: () => user.purchaseWelcomePack(),
+                              ),
                       ),
                       const SizedBox(height: 12),
 
@@ -528,12 +599,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFEF9A9A),
                         buttonShadow: const Color(0xFFB71C1C),
                         isFeatured: true,
-                        onTap: () {
-                          user.addCoins(1500);
-                          user.addHint(25);
-                          user.addMegaHint(3);
-                          _showMockPurchase(context, 'Cozy Starter Pack');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productCozyStarterPack,
+                          title: 'Cozy Starter Pack',
+                          onGranted: () {
+                            user.addCoins(1500);
+                            user.addHint(25);
+                            user.addMegaHint(3);
+                          },
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -551,10 +627,13 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonShadow: user.adsRemoved ? const Color(0xFF616161) : const Color(0xFF0D47A1),
                         onTap: user.adsRemoved
                             ? null
-                            : () {
-                                user.removeAds();
-                                _showMockPurchase(context, 'Remove Ads');
-                              },
+                            : () => _buyProduct(
+                                context: context,
+                                user: user,
+                                productId: PurchaseService.productRemoveAds,
+                                title: 'Remove Ads',
+                                onGranted: () => user.removeAds(),
+                              ),
                       ),
                       const SizedBox(height: 12),
 
@@ -571,13 +650,18 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         buttonHighlight: const Color(0xFFBA68C8),
                         buttonShadow: const Color(0xFF311B92),
                         isPremium: true,
-                        onTap: () {
-                          user.addCoins(8000);
-                          user.addHint(50);
-                          user.addUltraHint(5);
-                          if (!user.adsRemoved) user.removeAds();
-                          _showMockPurchase(context, 'Master Village Bundle');
-                        },
+                        onTap: () => _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productMasterBundle,
+                          title: 'Master Village Bundle',
+                          onGranted: () {
+                            user.addCoins(8000);
+                            user.addHint(50);
+                            user.addUltraHint(5);
+                            if (!user.adsRemoved) user.removeAds();
+                          },
+                        ),
                       ),
                       const SizedBox(height: 30),
                     ],
@@ -850,11 +934,16 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             ),
             const SizedBox(height: 14),
             GestureDetector(
-              onTap: () {
-                user.addHint(100);
-                if (!user.adsRemoved) user.removeAds();
-                _showMockPurchase(context, 'Flash Starter Bundle');
-              },
+              onTap: () => _buyProduct(
+                context: context,
+                user: user,
+                productId: PurchaseService.productFlashBundle,
+                title: 'Flash Starter Bundle',
+                onGranted: () {
+                  user.addHint(100);
+                  if (!user.adsRemoved) user.removeAds();
+                },
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12),

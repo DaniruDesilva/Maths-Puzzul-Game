@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../providers/user_provider.dart';
 import '../../../services/sound_service.dart';
+import '../../../services/purchase_service.dart';
 
 class AcornVaultDialog extends StatefulWidget {
   final UserProvider user;
@@ -21,14 +22,24 @@ class _AcornVaultDialogState extends State<AcornVaultDialog> {
   void _crackVault() {
     if (!widget.user.canCrackAcornVault) return;
 
-    SoundService.playSuccess();
-    HapticFeedback.heavyImpact();
+    PurchaseService.purchase(
+      context: context,
+      productId: PurchaseService.productAcornVault,
+      title: 'Acorn Vault (${widget.user.acornVaultCoins} Coins)',
+      user: widget.user,
+      onRewardGranted: () {
+        SoundService.playSuccess();
+        HapticFeedback.heavyImpact();
 
-    final cracked = widget.user.crackAcornVault();
-    setState(() {
-      _isCracked = true;
-      _collectedAmount = cracked;
-    });
+        final cracked = widget.user.crackAcornVault();
+        if (mounted) {
+          setState(() {
+            _isCracked = true;
+            _collectedAmount = cracked;
+          });
+        }
+      },
+    );
   }
 
   @override

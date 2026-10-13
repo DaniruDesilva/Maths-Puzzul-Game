@@ -28,6 +28,7 @@ dependencies:
   flutter_animate: ^4.5.2
   google_fonts: ^9.0.0
   flame: ^1.38.2
+  purchases_flutter: ^10.15.2
 
 dev_dependencies:
   flutter_test:
