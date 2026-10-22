@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../app_router.dart';
 import '../providers/user_provider.dart';
 import '../data/village_data.dart';
 import '../data/math_level_repository.dart';
 import 'village_screen.dart';
-import 'tutorial_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -83,23 +81,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _tipTimer?.cancel();
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeenTutorial = prefs.getBool('has_seen_tutorial') ?? false;
-
     if (!mounted) return;
 
-    final targetRoute = hasSeenTutorial ? AppRouter.home : AppRouter.tutorial;
-
-    // Smooth cinematic cross-fade transition directly into the Village / Tutorial
+    // Smooth cinematic cross-fade transition directly into the Village
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        settings: RouteSettings(name: targetRoute),
+        settings: const RouteSettings(name: AppRouter.home),
         transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (context, animation, secondaryAnimation) {
-          if (!hasSeenTutorial) {
-            return const TutorialScreen();
-          }
           return VillageScreen(village: VillageData.meadow, isRoot: true);
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {

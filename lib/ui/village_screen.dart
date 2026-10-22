@@ -737,7 +737,7 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                       child: ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(dialogCtx);
-                          _navigate(AppRouter.tutorial);
+                          _showHowToPlayChoice(context);
                         },
                         icon: const Icon(Icons.school_rounded, color: Color(0xFFFFD54F), size: 19),
                         label: FittedBox(
@@ -815,6 +815,117 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
     if (mounted) {
       _game.resumeEngine();
     }
+  }
+
+  void _showHowToPlayChoice(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (choiceCtx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 320,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF231710),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFF8B5A2B), width: 3),
+            boxShadow: const [
+              BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10)),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'HOW TO PLAY',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                  fontSize: 22,
+                  color: const Color(0xFFFFD54F),
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Choose how you would like to learn:',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.baloo2().fontFamily,
+                  fontSize: 13,
+                  color: const Color(0xFFCBD5E1),
+                ),
+              ),
+              const SizedBox(height: 18),
+              // Interactive option
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(choiceCtx);
+                    var provider = Provider.of<GameProvider>(context, listen: false);
+                    provider.replayInteractiveTutorial();
+                    _navigate(AppRouter.game);
+                  },
+                  icon: const Icon(Icons.touch_app_rounded, color: Colors.white, size: 20),
+                  label: Text(
+                    'PLAY INTERACTIVE TUTORIAL',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7CB342),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Slides option
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(choiceCtx);
+                    _navigate(AppRouter.tutorial);
+                  },
+                  icon: const Icon(Icons.menu_book_rounded, color: Color(0xFFFFD54F), size: 19),
+                  label: Text(
+                    'VIEW VISUAL RULEBOOK',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                      color: const Color(0xFFFFFBEB),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF8B5A2B), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(choiceCtx),
+                child: Text(
+                  'CANCEL',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.baloo2().fontFamily,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showFortuneWheel(BuildContext context, UserProvider user) async {

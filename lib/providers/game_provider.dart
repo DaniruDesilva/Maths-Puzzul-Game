@@ -34,6 +34,7 @@ class GameProvider extends ChangeNotifier {
   bool levelProgressSaved = false;
   bool isDailyChallenge = false;
   bool isCustomPuzzle = false;
+  bool forceInteractiveOnboarding = false;
   Map<String, int>? lastRewards;
 
   int hintsUsedInLevel = 0;
@@ -157,19 +158,31 @@ class GameProvider extends ChangeNotifier {
     // Initialize tray
     availableTray = List<int>.from(p.trayNumbers)..sort();
 
-    // Auto-select first empty blank cell
+    // Auto-select first empty blank cell (for Level 1, auto-select (2, 4) for optimal addition onboarding)
     selectedCell = null;
-    for (int r = 0; r < p.rows; r++) {
-      for (int c = 0; c < p.cols; c++) {
-        if (p.grid[r][c].isBlank && currentValues[r][c] == null) {
-          selectedCell = Point(r, c);
-          break;
+    if (currentLevel == 1 && !isDailyChallenge && !isCustomPuzzle && p.rows > 2 && p.cols > 4 && p.grid[2][4].isBlank && currentValues[2][4] == null) {
+      selectedCell = const Point(2, 4);
+    } else {
+      for (int r = 0; r < p.rows; r++) {
+        for (int c = 0; c < p.cols; c++) {
+          if (p.grid[r][c].isBlank && currentValues[r][c] == null) {
+            selectedCell = Point(r, c);
+            break;
+          }
         }
+        if (selectedCell != null) break;
       }
-      if (selectedCell != null) break;
     }
 
     _evaluateEquations();
+  }
+
+  Future<void> replayInteractiveTutorial() async {
+    forceInteractiveOnboarding = true;
+    currentLevel = 1;
+    isCustomPuzzle = false;
+    isDailyChallenge = false;
+    await _startCurrentLevel();
   }
 
   Future<void> startSpecificLevel(int level) async {

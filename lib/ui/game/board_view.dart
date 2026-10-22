@@ -1,13 +1,16 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../providers/game_provider.dart';
 import 'board_cell.dart';
 
 class MathBoardView extends StatelessWidget {
   final GameProvider provider;
+  final Point<int>? tutorialTargetCell;
 
   const MathBoardView({
     super.key,
     required this.provider,
+    this.tutorialTargetCell,
   });
 
   @override
@@ -114,6 +117,8 @@ class MathBoardView extends StatelessWidget {
                     final cellNotes = provider.cellNotes['$r,$c'];
                     final currentValue = provider.currentValues[r][c];
 
+                    final isTutTarget = tutorialTargetCell?.x == r && tutorialTargetCell?.y == c;
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: cellGap / 2),
                       child: BoardCellWidget(
@@ -121,6 +126,7 @@ class MathBoardView extends StatelessWidget {
                         currentValue: currentValue,
                         isSelected: isSelected,
                         isHighlightedInHint: isHintTarget,
+                        isTutorialTarget: isTutTarget,
                         isInActiveEquation: inActive,
                         isInViolatedEquation: inViolated,
                         isInSatisfiedEquation: inSatisfied,

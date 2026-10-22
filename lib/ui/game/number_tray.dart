@@ -4,10 +4,12 @@ import '../../providers/game_provider.dart';
 
 class MathNumberTray extends StatelessWidget {
   final GameProvider provider;
+  final int? tutorialTargetNumber;
 
   const MathNumberTray({
     super.key,
     required this.provider,
+    this.tutorialTargetNumber,
   });
 
   @override
@@ -148,10 +150,11 @@ class MathNumberTray extends StatelessWidget {
                   final count = counts[number]!;
                   final isHintNumber = provider.activeHint != null &&
                       provider.activeHint!.solutionValue == number;
+                  final isTutorialNumber = tutorialTargetNumber == number;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                    child: _buildTile(context, number, count, isHintNumber, isNotes),
+                    child: _buildTile(context, number, count, isHintNumber, isTutorialNumber, isNotes),
                   );
                 }).toList(),
               ),
@@ -167,6 +170,7 @@ class MathNumberTray extends StatelessWidget {
     int number,
     int count,
     bool isHintNumber,
+    bool isTutorialNumber,
     bool isNotes,
   ) {
     return GestureDetector(
@@ -184,24 +188,37 @@ class MathNumberTray extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isHintNumber
+                colors: isTutorialNumber
                     ? [
-                        const Color(0xFF10B981),
-                        const Color(0xFF047857),
+                        const Color(0xFFF59E0B),
+                        const Color(0xFFB45309),
                       ]
-                    : [
-                        const Color(0xFF785130), // Beveled top highlight
-                        const Color(0xFF4E321C), // Deep wooden core
-                      ],
+                    : isHintNumber
+                        ? [
+                            const Color(0xFF10B981),
+                            const Color(0xFF047857),
+                          ]
+                        : [
+                            const Color(0xFF785130), // Beveled top highlight
+                            const Color(0xFF4E321C), // Deep wooden core
+                          ],
               ),
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: isHintNumber
-                    ? const Color(0xFF6EE7B7)
-                    : const Color(0xFFA07248),
-                width: isHintNumber ? 2.2 : 1.5,
+                color: isTutorialNumber
+                    ? const Color(0xFFFDE68A)
+                    : isHintNumber
+                        ? const Color(0xFF6EE7B7)
+                        : const Color(0xFFA07248),
+                width: isTutorialNumber ? 2.6 : (isHintNumber ? 2.2 : 1.5),
               ),
               boxShadow: [
+                if (isTutorialNumber)
+                  const BoxShadow(
+                    color: Color(0xCCF59E0B),
+                    blurRadius: 16,
+                    spreadRadius: 3,
+                  ),
                 if (isHintNumber)
                   const BoxShadow(
                     color: Color(0x8810B981),
@@ -232,6 +249,31 @@ class MathNumberTray extends StatelessWidget {
               ),
             ),
           ),
+
+          // Tutorial pointer badge above target candidate
+          if (isTutorialNumber)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: -12,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFBBF24),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Color(0xAA000000), blurRadius: 4),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.arrow_downward_rounded,
+                    color: Color(0xFF451A03),
+                    size: 13,
+                  ),
+                ),
+              ),
+            ),
 
           // Multiple candidate count wax seal badge (e.g. x2)
           if (count > 1)

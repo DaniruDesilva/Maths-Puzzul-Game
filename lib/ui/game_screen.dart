@@ -19,6 +19,9 @@ import 'game/board_view.dart';
 import 'game/number_tray.dart';
 import 'game/game_toolbar.dart';
 import 'game/hint_bubble.dart';
+import 'game/interactive_onboarding_overlay.dart';
+import '../services/onboarding_service.dart';
+import 'tutorial_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -74,6 +77,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     if (provider.isDailyChallenge) {
       user.completeDailyChallenge();
+    }
+
+    if (provider.currentLevel == 1 && !provider.isDailyChallenge && !provider.isCustomPuzzle) {
+      user.completeInteractiveOnboarding();
+      provider.forceInteractiveOnboarding = false;
     }
   }
 
@@ -192,6 +200,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildGameUI(GameProvider provider) {
+    final user = Provider.of<UserProvider>(context);
+    final onboardingInfo = OnboardingService.evaluateStep(
+      levelNumber: provider.currentLevel,
+      isDailyChallenge: provider.isDailyChallenge,
+      isCustomPuzzle: provider.isCustomPuzzle,
+      hasCompletedInteractiveOnboarding: user.hasCompletedInteractiveOnboarding,
+      forceReplay: provider.forceInteractiveOnboarding,
+      selectedCell: provider.selectedCell,
+      currentValues: provider.currentValues,
+      availableTray: provider.availableTray,
+    );
+
     return Column(
       children: [
         // 1. Top Bar with Level Badge, Progress & Score
@@ -200,28 +220,65 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         // 2. Equation Progress Bar
         _buildEquationProgressBar(provider),
 
-        // 3. Feedback Pill (if any alert active)
-        if (provider.feedbackMessage != null)
+        // 3. Interactive Level 1 Onboarding Card
+        if (onboardingInfo != null && onboardingInfo.step != OnboardingStep.completed)
+          InteractiveOnboardingCard(
+            info: onboardingInfo,
+            onSkip: () => user.completeInteractiveOnboarding(),
+          )
+        // 4. In-Game Contextual Tooltips (Notes, Hint, Mistakes)
+        else if (provider.isNotesMode && !user.hasSeenNotesTooltip)
+          InGameContextualTooltip(
+            icon: Icons.edit_note_rounded,
+            iconColor: const Color(0xFFFFD54F),
+            title: 'PENCIL NOTES ACTIVE',
+            message: 'Tap numbers in the tray to jot down candidate notes into the slot without making a final move.',
+            onDismiss: () => user.markNotesTooltipSeen(),
+          )
+        else if (provider.currentLevel == 2 && !user.hasSeenHintTooltip)
+          InGameContextualTooltip(
+            icon: Icons.lightbulb_rounded,
+            iconColor: const Color(0xFF34D399),
+            title: 'SMART HINT AVAILABLE',
+            message: 'Stuck on tricky intersections? Tap the Smart Hint button anytime for free logical guidance!',
+            onDismiss: () => user.markHintTooltipSeen(),
+          )
+        else if (provider.violatedEquationIds.isNotEmpty && !user.hasSeenMistakeTooltip)
+          InGameContextualTooltip(
+            icon: Icons.error_outline_rounded,
+            iconColor: const Color(0xFFFB7185),
+            title: 'EQUATION MISMATCH',
+            message: 'The line turned red because numbers don\'t add up. Tap Erase or Undo to fix it!',
+            onDismiss: () => user.markMistakeTooltipSeen(),
+          )
+        // 5. Feedback Pill (if any alert active)
+        else if (provider.feedbackMessage != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
             child: _buildFeedbackPill(provider.feedbackMessage!),
           ),
 
-        // 4. Central Interactive Crossword Board (Zero Overflow Guaranteed)
+        // 6. Central Interactive Crossword Board (Zero Overflow Guaranteed)
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0),
-            child: MathBoardView(provider: provider),
+            child: MathBoardView(
+              provider: provider,
+              tutorialTargetCell: onboardingInfo?.targetCell,
+            ),
           ),
         ),
 
-        // 5. Floating Smart Hint bubble (if active)
+        // 7. Floating Smart Hint bubble (if active)
         MathHintBubble(provider: provider),
 
-        // 6. Tactile 3D Candidate Number Tray
-        MathNumberTray(provider: provider),
+        // 8. Tactile 3D Candidate Number Tray
+        MathNumberTray(
+          provider: provider,
+          tutorialTargetNumber: onboardingInfo?.targetTrayNumber,
+        ),
 
-        // 7. Wood & Brass Action Toolbar (Undo, Erase, Notes, Hint)
+        // 9. Wood & Brass Action Toolbar (Undo, Erase, Notes, Hint)
         MathGameToolbar(provider: provider),
 
         const SizedBox(height: 4),
@@ -381,6 +438,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Help / Tutorial Quick Guide button
+              GestureDetector(
+                onTap: () => _showHelpGuide(provider),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF26190F),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.help_outline_rounded,
+                    color: Color(0xFFFDE68A),
+                    size: 20,
                   ),
                 ),
               ),
@@ -1140,6 +1220,231 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showHelpGuide(GameProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E140C),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 25,
+                offset: Offset(0, -6),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top drag handle
+                Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.menu_book_rounded,
+                        color: Color(0xFFFBBF24),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'HOW TO PLAY',
+                            style: TextStyle(
+                              color: const Color(0xFFFFFBEB),
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              fontSize: 19,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          Text(
+                            'Number Haven Crossword Guide',
+                            style: TextStyle(
+                              color: const Color(0xFF94A3B8),
+                              fontFamily: GoogleFonts.baloo2().fontFamily,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.pop(sheetContext),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildHelpItem(
+                  icon: Icons.shuffle_rounded,
+                  iconColor: const Color(0xFF38BDF8),
+                  title: 'Crossword Math Equations',
+                  desc: 'Every row and column equation must calculate correctly. When solved, lines light up emerald green!',
+                ),
+                const SizedBox(height: 10),
+                _buildHelpItem(
+                  icon: Icons.touch_app_rounded,
+                  iconColor: const Color(0xFFFBBF24),
+                  title: 'Select Cell & Place Tile',
+                  desc: 'Tap an empty wooden slot on the board, then tap a candidate number tile from your tray below.',
+                ),
+                const SizedBox(height: 10),
+                _buildHelpItem(
+                  icon: Icons.lightbulb_rounded,
+                  iconColor: const Color(0xFF34D399),
+                  title: 'Smart Hints & Boosters',
+                  desc: 'Stuck? Smart Hint calculates the next logical deduction with zero score penalty.',
+                ),
+                const SizedBox(height: 10),
+                _buildHelpItem(
+                  icon: Icons.edit_note_rounded,
+                  iconColor: const Color(0xFFFB7185),
+                  title: 'Pencil Notes Mode',
+                  desc: 'Turn on Notes to jot down possible candidates in any slot without committing a move.',
+                ),
+                const SizedBox(height: 20),
+                // Replay Level 1 Interactive Tutorial button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7CB342),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 4,
+                    ),
+                    icon: const Icon(Icons.replay_rounded),
+                    label: Text(
+                      'Replay Interactive Tutorial (Level 1)',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.baloo2().fontFamily,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      provider.replayInteractiveTutorial();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Open Full Slides Tutorial
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFE2E8F0),
+                      side: const BorderSide(color: Color(0xFF5D3E24), width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    icon: const Icon(Icons.auto_stories_rounded, size: 18),
+                    label: Text(
+                      'View Visual Rulebook Slides',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.baloo2().fontFamily,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TutorialScreen()),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHelpItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String desc,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A1C12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF52361F), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: const Color(0xFFFFFBEB),
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  desc,
+                  style: TextStyle(
+                    color: const Color(0xFFCBD5E1),
+                    fontFamily: GoogleFonts.baloo2().fontFamily,
+                    fontSize: 11.5,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

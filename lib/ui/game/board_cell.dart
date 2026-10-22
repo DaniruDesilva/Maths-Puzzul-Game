@@ -12,6 +12,7 @@ class BoardCellWidget extends StatelessWidget {
   final bool isInSatisfiedEquation;
   final Set<int>? notes;
   final bool isNotesMode;
+  final bool isTutorialTarget;
   final VoidCallback? onTap;
   final double size;
 
@@ -21,6 +22,7 @@ class BoardCellWidget extends StatelessWidget {
     required this.currentValue,
     this.isSelected = false,
     this.isHighlightedInHint = false,
+    this.isTutorialTarget = false,
     this.isInActiveEquation = false,
     this.isInViolatedEquation = false,
     this.isInSatisfiedEquation = false,
@@ -261,7 +263,16 @@ class BoardCellWidget extends StatelessWidget {
     double borderWidth = 2.0;
     List<BoxShadow> shadows = [];
 
-    if (isHighlightedInHint) {
+    if (isTutorialTarget && !hasValue) {
+      // Tutorial target focus: radiant golden amber pulse
+      borderColor = const Color(0xFFFBBF24);
+      borderWidth = 3.2;
+      shadows.add(const BoxShadow(
+        color: Color(0xCCF59E0B),
+        blurRadius: 16,
+        spreadRadius: 3,
+      ));
+    } else if (isHighlightedInHint) {
       // Smart hint focus target: radiant emerald glow
       borderColor = const Color(0xFF10B981);
       borderWidth = 3.0;
@@ -403,6 +414,16 @@ class BoardCellWidget extends StatelessWidget {
               color: Color(0x66FFD54F),
               shape: BoxShape.circle,
             ),
+          ),
+        );
+      }
+      if (isTutorialTarget && !isSelected) {
+        // Distinct golden touch beacon to invite the player's tap
+        return Center(
+          child: Icon(
+            Icons.touch_app_rounded,
+            color: const Color(0xFFFBBF24),
+            size: size * 0.46,
           ),
         );
       }

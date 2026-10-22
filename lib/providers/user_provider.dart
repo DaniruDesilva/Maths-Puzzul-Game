@@ -108,6 +108,12 @@ class UserProvider extends ChangeNotifier {
   // High scores for each level (level_number -> stars)
   Map<int, int> levelStars = {};
 
+  // Interactive Level 1 Onboarding & In-game Tooltip Flags
+  bool hasCompletedInteractiveOnboarding = false;
+  bool hasSeenNotesTooltip = false;
+  bool hasSeenHintTooltip = false;
+  bool hasSeenMistakeTooltip = false;
+
   SharedPreferences? _prefs;
 
   UserProvider() {
@@ -168,6 +174,13 @@ class UserProvider extends ChangeNotifier {
     hapticsEnabled = _prefs!.getBool('setting_haptics') ?? true;
     notificationsEnabled = _prefs!.getBool('setting_notifications') ?? true;
     
+    // Onboarding & Tooltip preferences
+    hasCompletedInteractiveOnboarding = _prefs!.getBool('has_completed_interactive_onboarding') ??
+        (_prefs!.getBool('has_seen_tutorial') ?? (levelsCompleted > 0));
+    hasSeenNotesTooltip = _prefs!.getBool('has_seen_notes_tooltip') ?? false;
+    hasSeenHintTooltip = _prefs!.getBool('has_seen_hint_tooltip') ?? false;
+    hasSeenMistakeTooltip = _prefs!.getBool('has_seen_mistake_tooltip') ?? false;
+
     SoundService.setSoundEnabled(soundEnabled);
     SoundService.setMusicEnabled(musicEnabled);
     
@@ -708,6 +721,50 @@ class UserProvider extends ChangeNotifier {
       await NotificationService.showConfirmationNotification();
     } else {
       await NotificationService.cancelAll();
+    }
+    notifyListeners();
+  }
+
+  void completeInteractiveOnboarding() {
+    hasCompletedInteractiveOnboarding = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_interactive_onboarding', true);
+      _prefs!.setBool('has_seen_tutorial', true);
+    }
+    notifyListeners();
+  }
+
+  void resetInteractiveOnboarding() {
+    hasCompletedInteractiveOnboarding = false;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_interactive_onboarding', false);
+    }
+    notifyListeners();
+  }
+
+  void markNotesTooltipSeen() {
+    if (hasSeenNotesTooltip) return;
+    hasSeenNotesTooltip = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_seen_notes_tooltip', true);
+    }
+    notifyListeners();
+  }
+
+  void markHintTooltipSeen() {
+    if (hasSeenHintTooltip) return;
+    hasSeenHintTooltip = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_seen_hint_tooltip', true);
+    }
+    notifyListeners();
+  }
+
+  void markMistakeTooltipSeen() {
+    if (hasSeenMistakeTooltip) return;
+    hasSeenMistakeTooltip = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_seen_mistake_tooltip', true);
     }
     notifyListeners();
   }
