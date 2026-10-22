@@ -703,7 +703,9 @@ class UserProvider extends ChangeNotifier {
       await _prefs!.setBool('setting_notifications', notificationsEnabled);
     }
     if (notificationsEnabled) {
+      await NotificationService.requestPermission();
       await NotificationService.scheduleDailyReminder();
+      await NotificationService.showConfirmationNotification();
     } else {
       await NotificationService.cancelAll();
     }
