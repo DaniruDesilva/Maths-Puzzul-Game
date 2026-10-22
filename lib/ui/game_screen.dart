@@ -14,6 +14,7 @@ import '../providers/game_provider.dart';
 import '../providers/user_provider.dart';
 import '../services/ad_service.dart';
 import '../services/sound_service.dart';
+import '../services/app_review_service.dart';
 import 'game/board_view.dart';
 import 'game/number_tray.dart';
 import 'game/game_toolbar.dart';
@@ -753,7 +754,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               ? 'FINISH'
                               : (provider.isDailyChallenge ? 'CLAIM REWARD' : 'NEXT LEVEL'),
                           highlight: true,
-                          onTap: () {
+                          onTap: () async {
                             var user = Provider.of<UserProvider>(context, listen: false);
 
                             void proceed() {
@@ -761,6 +762,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 Navigator.pop(context);
                               } else {
                                 provider.nextLevel();
+                              }
+                            }
+
+                            // Milestone Review Prompt (Level 5, 15, 30)
+                            if (!provider.isDailyChallenge && !provider.isCustomPuzzle) {
+                              bool shouldPrompt = await AppReviewService.shouldPromptMilestoneReview(provider.currentLevel);
+                              if (shouldPrompt && mounted) {
+                                await AppReviewService.showMilestoneRatingDialog(
+                                  context,
+                                  level: provider.currentLevel,
+                                );
                               }
                             }
 

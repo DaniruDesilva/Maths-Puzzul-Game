@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../app_router.dart';
 import '../providers/user_provider.dart';
 import '../data/village_data.dart';
+import '../data/math_level_repository.dart';
 import 'village_screen.dart';
 import 'tutorial_screen.dart';
 
@@ -68,11 +69,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // 3. Precache village and villager artwork
     final precacheFuture = _precacheVillageAssets();
 
-    // 4. Await both data readiness, asset preloading, and progress bar to finish
+    // 4. Preload verified campaign levels JSON
+    final campaignFuture = MathLevelRepository.preloadCampaign();
+
+    // 5. Await data readiness, asset preloading, campaign loading, and progress bar
     await Future.wait([
       animationFuture,
       dataFuture,
       precacheFuture,
+      campaignFuture,
     ]);
 
     _tipTimer?.cancel();
@@ -412,42 +417,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           ),
         ),
         const SizedBox(height: 5),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD54F).withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: const Color(0xFFFFD54F).withValues(alpha: 0.8),
-                  width: 1.2,
-                ),
+        Text(
+          'CREATOR BOX STUDIOS',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lilitaOne(
+            color: Colors.white,
+            fontSize: 16,
+            letterSpacing: 2.2,
+            shadows: const [
+              Shadow(
+                color: Colors.black,
+                offset: Offset(0, 2),
+                blurRadius: 6,
               ),
-              child: const Icon(
-                Icons.inventory_2_rounded,
-                color: Color(0xFFFFD54F),
-                size: 14,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'CREATOR BOX STUDIOS',
-              style: GoogleFonts.lilitaOne(
-                color: Colors.white,
-                fontSize: 16,
-                letterSpacing: 2.2,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black,
-                    offset: Offset(0, 2),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     )

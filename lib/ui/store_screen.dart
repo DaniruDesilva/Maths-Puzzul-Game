@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,11 +24,24 @@ class StoreScreen extends StatefulWidget {
 
 class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
-  late Timer _flashSaleTimer;
+  Timer? _flashSaleTimer;
   Duration _timeLeft = Duration.zero;
   late StoreCategory _selectedCategory;
 
+  static bool get _isInTest {
+    if (kIsWeb) return false;
+    try {
+      return Platform.environment.containsKey('FLUTTER_TEST');
+    } catch (_) {
+      return false;
+    }
+  }
+
   void _calculateTimeLeft() {
+    if (_isInTest) {
+      _timeLeft = Duration.zero;
+      return;
+    }
     final now = DateTime.now();
     if (now.weekday == DateTime.saturday) {
       final endOfSaturday = DateTime(now.year, now.month, now.day, 23, 59, 59);
@@ -48,13 +63,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     _selectedCategory = _parseInitialCategory(widget.initialCategory);
     _calculateTimeLeft();
 
-    _flashSaleTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _calculateTimeLeft();
-        });
-      }
+    PurchaseService.fetchProducts().then((_) {
+      if (mounted) setState(() {});
     });
+
+    if (!_isInTest) {
+      _flashSaleTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          setState(() {
+            _calculateTimeLeft();
+          });
+        }
+      });
+    }
   }
 
   StoreCategory _parseInitialCategory(String? cat) {
@@ -87,7 +108,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _pulseController.dispose();
-    _flashSaleTimer.cancel();
+    _flashSaleTimer?.cancel();
     super.dispose();
   }
 
@@ -147,16 +168,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFFFDF5E6), size: 28),
-        title: Text(
-          'VILLAGE MERCHANT',
-          style: TextStyle(
-            fontFamily: GoogleFonts.lilitaOne().fontFamily,
-            color: const Color(0xFFFFD54F),
-            fontSize: 26,
-            letterSpacing: 2.5,
-            shadows: const [
-              Shadow(color: Colors.black54, offset: Offset(0, 3), blurRadius: 4),
-            ],
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'VILLAGE MERCHANT',
+            style: TextStyle(
+              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+              color: const Color(0xFFFFD54F),
+              fontSize: 26,
+              letterSpacing: 2.5,
+              shadows: const [
+                Shadow(color: Colors.black54, offset: Offset(0, 3), blurRadius: 4),
+              ],
+            ),
           ),
         ),
         centerTitle: true,
@@ -250,7 +274,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         description: '250 Coins • Quick boost for small repairs.',
                         icon: Icons.monetization_on_outlined,
                         iconColor: const Color(0xFFFFB74D),
-                        buttonText: '\$0.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCoins250, fallbackPrice: '\$0.99'),
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
@@ -270,7 +294,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         description: '750 Coins • Great for unlocking new plots.',
                         icon: Icons.paid_rounded,
                         iconColor: const Color(0xFFFFD54F),
-                        buttonText: '\$1.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCoins750, fallbackPrice: '\$1.99'),
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
@@ -292,7 +316,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD54F),
                         badgeText: '+25% BONUS',
                         badgeColor: const Color(0xFFE65100),
-                        buttonText: '\$3.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCoins2000, fallbackPrice: '\$3.99'),
                         buttonColor: const Color(0xFFF57C00),
                         buttonHighlight: const Color(0xFFFFB74D),
                         buttonShadow: const Color(0xFFB95000),
@@ -315,7 +339,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD54F),
                         badgeText: 'MOST POPULAR ⭐',
                         badgeColor: const Color(0xFFC2185B),
-                        buttonText: '\$6.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCoins5000, fallbackPrice: '\$6.99'),
                         buttonColor: const Color(0xFFE91E63),
                         buttonHighlight: const Color(0xFFF48FB1),
                         buttonShadow: const Color(0xFF880E4F),
@@ -338,7 +362,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD700),
                         badgeText: 'BEST VALUE 👑',
                         badgeColor: const Color(0xFF6A1B9A),
-                        buttonText: '\$11.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCoins12000, fallbackPrice: '\$11.99'),
                         buttonColor: const Color(0xFF7B1FA2),
                         buttonHighlight: const Color(0xFFBA68C8),
                         buttonShadow: const Color(0xFF4A148C),
@@ -399,7 +423,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         description: 'Reveals numbers directly on selected blank cells.',
                         icon: Icons.lightbulb_rounded,
                         iconColor: const Color(0xFFFFB74D),
-                        buttonText: '\$0.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHints10, fallbackPrice: '\$0.99'),
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
@@ -421,7 +445,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFB74D),
                         badgeText: 'POPULAR',
                         badgeColor: const Color(0xFFF57C00),
-                        buttonText: '\$1.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHints30, fallbackPrice: '\$1.99'),
                         buttonColor: const Color(0xFFF6A000),
                         buttonHighlight: const Color(0xFFFFD54F),
                         buttonShadow: const Color(0xFFB97700),
@@ -443,7 +467,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD54F),
                         badgeText: 'BEST VALUE',
                         badgeColor: const Color(0xFF2E7D32),
-                        buttonText: '\$3.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHints75, fallbackPrice: '\$3.99'),
                         buttonColor: const Color(0xFF43A047),
                         buttonHighlight: const Color(0xFF81C784),
                         buttonShadow: const Color(0xFF1B5E20),
@@ -451,7 +475,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         onTap: () => _buyProduct(
                           context: context,
                           user: user,
-                          productId: 'hints_75',
+                          productId: PurchaseService.productHints75,
                           title: '75 Regular Hints',
                           onGranted: () => user.addHint(75),
                         ),
@@ -466,7 +490,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD700),
                         badgeText: 'MEGA',
                         badgeColor: const Color(0xFFF57F17),
-                        buttonText: '\$1.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHintsMega10, fallbackPrice: '\$1.99'),
                         buttonColor: const Color(0xFFF57F17),
                         buttonHighlight: const Color(0xFFFFEE58),
                         buttonShadow: const Color(0xFFBC5100),
@@ -488,7 +512,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD700),
                         badgeText: '+20% BONUS',
                         badgeColor: const Color(0xFFE65100),
-                        buttonText: '\$4.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHintsMega15, fallbackPrice: '\$4.99'),
                         buttonColor: const Color(0xFFE65100),
                         buttonHighlight: const Color(0xFFFFB74D),
                         buttonShadow: const Color(0xFFAC1900),
@@ -496,7 +520,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         onTap: () => _buyProduct(
                           context: context,
                           user: user,
-                          productId: 'hints_mega_15',
+                          productId: PurchaseService.productHintsMega15,
                           title: '15 Mega Hints',
                           onGranted: () => user.addMegaHint(15),
                         ),
@@ -511,7 +535,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFF00E5FF),
                         badgeText: '2X POWER',
                         badgeColor: const Color(0xFF00838F),
-                        buttonText: '\$2.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHintsUltra5, fallbackPrice: '\$2.99'),
                         buttonColor: const Color(0xFF00ACC1),
                         buttonHighlight: const Color(0xFF4DD0E1),
                         buttonShadow: const Color(0xFF006064),
@@ -533,7 +557,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFF00E5FF),
                         badgeText: 'ULTRA 👑',
                         badgeColor: const Color(0xFF006064),
-                        buttonText: '\$5.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productHintsUltra8, fallbackPrice: '\$5.99'),
                         buttonColor: const Color(0xFF00838F),
                         buttonHighlight: const Color(0xFF4DD0E1),
                         buttonShadow: const Color(0xFF004D40),
@@ -541,7 +565,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         onTap: () => _buyProduct(
                           context: context,
                           user: user,
-                          productId: 'hints_ultra_8',
+                          productId: PurchaseService.productHintsUltra8,
                           title: '8 Ultra Hints',
                           onGranted: () => user.addUltraHint(8),
                         ),
@@ -569,7 +593,9 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD54F),
                         badgeText: user.hasPurchasedWelcomePack ? 'CLAIMED' : '90% OFF ⚡',
                         badgeColor: user.hasPurchasedWelcomePack ? const Color(0xFF616161) : const Color(0xFFE53935),
-                        buttonText: user.hasPurchasedWelcomePack ? 'OWNED' : '\$0.99',
+                        buttonText: user.hasPurchasedWelcomePack
+                            ? 'OWNED'
+                            : PurchaseService.getPrice(PurchaseService.productWelcomePack, fallbackPrice: '\$0.99'),
                         buttonColor: user.hasPurchasedWelcomePack ? const Color(0xFF9E9E9E) : const Color(0xFFE53935),
                         buttonHighlight: user.hasPurchasedWelcomePack ? const Color(0xFFBDBDBD) : const Color(0xFFFF8A80),
                         buttonShadow: user.hasPurchasedWelcomePack ? const Color(0xFF616161) : const Color(0xFFB71C1C),
@@ -594,7 +620,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD54F),
                         badgeText: '60% OFF 🏷️',
                         badgeColor: const Color(0xFFD32F2F),
-                        buttonText: '\$2.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productCozyStarterPack, fallbackPrice: '\$2.99'),
                         buttonColor: const Color(0xFFE53935),
                         buttonHighlight: const Color(0xFFEF9A9A),
                         buttonShadow: const Color(0xFFB71C1C),
@@ -621,7 +647,9 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFE57373),
                         badgeText: user.adsRemoved ? 'OWNED' : 'PERMANENT',
                         badgeColor: user.adsRemoved ? const Color(0xFF616161) : const Color(0xFF1976D2),
-                        buttonText: user.adsRemoved ? 'BOUGHT' : '\$2.99',
+                        buttonText: user.adsRemoved
+                            ? 'BOUGHT'
+                            : PurchaseService.getPrice(PurchaseService.productRemoveAds, fallbackPrice: '\$2.99'),
                         buttonColor: user.adsRemoved ? const Color(0xFF9E9E9E) : const Color(0xFF1E88E5),
                         buttonHighlight: user.adsRemoved ? const Color(0xFFBDBDBD) : const Color(0xFF64B5F6),
                         buttonShadow: user.adsRemoved ? const Color(0xFF616161) : const Color(0xFF0D47A1),
@@ -645,7 +673,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         iconColor: const Color(0xFFFFD700),
                         badgeText: 'ULTIMATE PACK 👑',
                         badgeColor: const Color(0xFF4A148C),
-                        buttonText: '\$9.99',
+                        buttonText: PurchaseService.getPrice(PurchaseService.productMasterBundle, fallbackPrice: '\$9.99'),
                         buttonColor: const Color(0xFF6A1B9A),
                         buttonHighlight: const Color(0xFFBA68C8),
                         buttonShadow: const Color(0xFF311B92),
@@ -802,7 +830,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
   Widget _buildCurrencyHeader(UserProvider user) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF3E2723),
         borderRadius: BorderRadius.circular(18),
@@ -811,14 +839,20 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           BoxShadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 4),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildCurrencyPill(Icons.monetization_on_rounded, const Color(0xFFFFD54F), user.coins.toString(), 'Coins'),
-          _buildCurrencyPill(Icons.lightbulb_rounded, const Color(0xFFFFB74D), user.hintsRegular.toString(), 'Hints'),
-          _buildCurrencyPill(Icons.star_rounded, const Color(0xFFFFD700), user.hintsMega.toString(), 'Mega'),
-          _buildCurrencyPill(Icons.diamond_rounded, const Color(0xFF00E5FF), user.hintsUltra.toString(), 'Ultra'),
-        ],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildCurrencyPill(Icons.monetization_on_rounded, const Color(0xFFFFD54F), user.coins.toString(), 'Coins'),
+            const SizedBox(width: 12),
+            _buildCurrencyPill(Icons.lightbulb_rounded, const Color(0xFFFFB74D), user.hintsRegular.toString(), 'Hints'),
+            const SizedBox(width: 12),
+            _buildCurrencyPill(Icons.star_rounded, const Color(0xFFFFD700), user.hintsMega.toString(), 'Mega'),
+            const SizedBox(width: 12),
+            _buildCurrencyPill(Icons.diamond_rounded, const Color(0xFF00E5FF), user.hintsUltra.toString(), 'Ultra'),
+          ],
+        ),
       ),
     );
   }
@@ -888,22 +922,31 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.flash_on_rounded, color: Color(0xFFFFD54F), size: 24),
-                    const SizedBox(width: 6),
-                    Text(
-                      'LIMITED FLASH SALE',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                        color: Colors.white,
-                        fontSize: 18,
-                        letterSpacing: 1.2,
-                        shadows: const [Shadow(color: Color(0xFFFF5252), blurRadius: 10)],
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.flash_on_rounded, color: Color(0xFFFFD54F), size: 24),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'LIMITED FLASH SALE',
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              color: Colors.white,
+                              fontSize: 18,
+                              letterSpacing: 1.2,
+                              shadows: const [Shadow(color: Color(0xFFFF5252), blurRadius: 10)],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -961,7 +1004,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
                 child: Center(
                   child: Text(
-                    '\$3.99 (50% OFF)',
+                    '${PurchaseService.getPrice(PurchaseService.productFlashBundle, fallbackPrice: "\$3.99")} (50% OFF)',
                     style: TextStyle(
                       fontFamily: GoogleFonts.lilitaOne().fontFamily,
                       color: const Color(0xFF3E2723),
@@ -1091,8 +1134,15 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                   if (canCrack)
                     GestureDetector(
                       onTap: () {
-                        final cracked = user.crackAcornVault();
-                        _showMockPurchase(context, 'Acorn Vault ($cracked Coins)');
+                        _buyProduct(
+                          context: context,
+                          user: user,
+                          productId: PurchaseService.productAcornVault,
+                          title: 'Acorn Vault (${user.acornVaultCoins} Coins)',
+                          onGranted: () {
+                            user.crackAcornVault();
+                          },
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1107,7 +1157,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                           ],
                         ),
                         child: Text(
-                          'CRACK\n\$1.49',
+                          'CRACK\n${PurchaseService.getPrice(PurchaseService.productAcornVault, fallbackPrice: "\$1.49")}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: GoogleFonts.lilitaOne().fontFamily,

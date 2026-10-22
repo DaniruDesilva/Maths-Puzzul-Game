@@ -107,6 +107,9 @@ class GameProvider extends ChangeNotifier {
 
     try {
       if (isDailyChallenge) {
+        if (!MathLevelRepository.isCampaignLoaded) {
+          await MathLevelRepository.preloadCampaign();
+        }
         currentPuzzle = MathLevelRepository.getDailyChallenge(DateTime.now());
       } else if (isCustomPuzzle) {
         currentPuzzle ??= MathLevelRepository.getCampaignLevelSync(1);
@@ -169,17 +172,17 @@ class GameProvider extends ChangeNotifier {
     _evaluateEquations();
   }
 
-  void startSpecificLevel(int level) {
+  Future<void> startSpecificLevel(int level) async {
     currentLevel = level;
     isCustomPuzzle = false;
     isDailyChallenge = false;
-    _startCurrentLevel();
+    await _startCurrentLevel();
   }
 
-  void startDailyChallenge() {
+  Future<void> startDailyChallenge() async {
     isDailyChallenge = true;
     isCustomPuzzle = false;
-    _startCurrentLevel();
+    await _startCurrentLevel();
   }
 
   bool startCustomSeed(String seedCode) {

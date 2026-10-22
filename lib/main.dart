@@ -7,28 +7,55 @@ import 'providers/user_provider.dart';
 import 'services/notification_service.dart';
 import 'services/sound_service.dart';
 import 'services/ad_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await NotificationService.initialize();
-  await NotificationService.scheduleDailyReminder();
-  await SoundService.init();
-  AdService.initialize();
+  try {
+    await NotificationService.initialize();
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsEnabled = prefs.getBool('setting_notifications') ?? true;
+    if (notificationsEnabled) {
+      await NotificationService.scheduleDailyReminder();
+    }
+  } catch (e) {
+    debugPrint('NotificationService init error: $e');
+  }
+
+  try {
+    await SoundService.init();
+  } catch (e) {
+    debugPrint('SoundService init error: $e');
+  }
+
+  try {
+    AdService.initialize();
+  } catch (e) {
+    debugPrint('AdService init error: $e');
+  }
 
   // Lock to portrait mode for best mobile experience
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  try {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+  } catch (e) {
+    debugPrint('Orientation lock error: $e');
+  }
 
   // Make status bar transparent
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
+  try {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
+  } catch (e) {
+    debugPrint('SystemUIOverlayStyle error: $e');
+  }
 
   runApp(
     MultiProvider(

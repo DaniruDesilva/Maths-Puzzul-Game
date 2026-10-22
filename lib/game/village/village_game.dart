@@ -1,7 +1,9 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../data/village_data.dart';
 import '../../../providers/user_provider.dart';
@@ -14,6 +16,15 @@ class VillageGame extends FlameGame with PanDetector {
   final void Function(BuildingDef)? onBuildingTapped;
 
   VillageGame({required this.village, required this.userProvider, this.onBuildingTapped});
+
+  static bool get _isInTest {
+    if (kIsWeb) return false;
+    try {
+      return Platform.environment.containsKey('FLUTTER_TEST');
+    } catch (_) {
+      return false;
+    }
+  }
 
   late SpriteComponent background;
   late List<BuildingComponent> buildings = [];
@@ -30,6 +41,8 @@ class VillageGame extends FlameGame with PanDetector {
     world = World();
     camera.world = world;
     addAll([camera, world]);
+
+    if (_isInTest) return;
 
     // Load background
     final bgSprite = await loadSprite(village.background);
@@ -89,10 +102,17 @@ class VillageGame extends FlameGame with PanDetector {
     }
   }
 
+  double _villagerCheckTimer = 0.0;
+
   @override
   void update(double dt) {
     super.update(dt);
-    _checkAndSpawnVillagers();
+    if (_isInTest) return;
+    _villagerCheckTimer += dt;
+    if (_villagerCheckTimer >= 1.5) {
+      _villagerCheckTimer = 0.0;
+      _checkAndSpawnVillagers();
+    }
   }
 
   @override

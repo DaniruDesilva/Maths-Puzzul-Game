@@ -10,6 +10,8 @@ import '../data/village_data.dart';
 import '../game/village/village_game.dart';
 import '../app_router.dart';
 import '../services/sound_service.dart';
+import '../services/purchase_service.dart';
+import '../services/app_review_service.dart';
 
 import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
@@ -25,12 +27,13 @@ class VillageScreen extends StatefulWidget {
   State<VillageScreen> createState() => _VillageScreenState();
 }
 
-class _VillageScreenState extends State<VillageScreen> {
+class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserver {
   late VillageGame _game;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final user = Provider.of<UserProvider>(context, listen: false);
     
     if (user.musicEnabled && SoundService.isMusicEnabled) {
@@ -40,19 +43,52 @@ class _VillageScreenState extends State<VillageScreen> {
     _game = VillageGame(
       village: widget.village, 
       userProvider: user,
-      onBuildingTapped: (def) {
-        showModalBottomSheet(
+      onBuildingTapped: (def) async {
+        _game.pauseEngine();
+        await showModalBottomSheet(
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
+          useRootNavigator: true,
           builder: (context) => BuildSheet(buildingDef: def),
         );
+        if (mounted) {
+          _game.resumeEngine();
+        }
       },
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkStarterGiftBonus();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _game.pauseEngine();
+    } else if (state == AppLifecycleState.resumed) {
+      _game.resumeEngine();
+    }
+  }
+
+  Future<T?> _navigate<T>(String routeName, {Object? arguments}) async {
+    _game.pauseEngine();
+    try {
+      return await Navigator.pushNamed<T>(context, routeName, arguments: arguments);
+    } finally {
+      if (mounted) {
+        _game.resumeEngine();
+      }
+    }
   }
 
   @override
@@ -220,12 +256,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                       clipBehavior: Clip.none,
                                       children: [
                                         GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => FortuneWheelDialog(user: user),
-                                            );
-                                          },
+                                          onTap: () => _showFortuneWheel(context, user),
                                           child: Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
@@ -270,12 +301,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                       clipBehavior: Clip.none,
                                       children: [
                                         GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AcornVaultDialog(user: user),
-                                            );
-                                          },
+                                          onTap: () => _showAcornVault(context, user),
                                           child: Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
@@ -324,7 +350,7 @@ class _VillageScreenState extends State<VillageScreen> {
                               '${user.coins}',
                               const Color(0xFFFFD54F),
                               showAddIcon: true,
-                              onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'coins'),
+                              onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
                             );
                           }
 
@@ -335,7 +361,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                 children: [
                                   // Create Button
                                   GestureDetector(
-                                    onTap: () => Navigator.pushNamed(context, AppRouter.customPuzzle),
+                                    onTap: () => _navigate(AppRouter.customPuzzle),
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
@@ -350,7 +376,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                   const SizedBox(height: 8),
                                   // Achievements Button
                                   GestureDetector(
-                                    onTap: () => Navigator.pushNamed(context, AppRouter.achievements),
+                                    onTap: () => _navigate(AppRouter.achievements),
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
@@ -374,7 +400,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                     user.isLoading ? '...' : '${user.hintsRegular}',
                                     const Color(0xFFF2C94C),
                                     showAddIcon: true,
-                                    onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'hints'),
+                                    onTap: () => _navigate(AppRouter.store, arguments: 'hints'),
                                   ),
                                   const SizedBox(height: 8),
                                   // Coins Badge - Now directly opens Store on Coins tab!
@@ -383,7 +409,7 @@ class _VillageScreenState extends State<VillageScreen> {
                                     user.isLoading ? '...' : '${user.coins}',
                                     const Color(0xFFFFD54F),
                                     showAddIcon: true,
-                                    onTap: () => Navigator.pushNamed(context, AppRouter.store, arguments: 'coins'),
+                                    onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
                                   ),
                                 ],
                               ),
@@ -422,16 +448,18 @@ class _VillageScreenState extends State<VillageScreen> {
                             _buildSideButton(
                               icon: Icons.map_rounded, 
                               color: const Color(0xFF8B5A2B), 
-                              onTap: () => Navigator.pushNamed(context, AppRouter.biomeMap)
+                              onTap: () => _navigate(AppRouter.biomeMap),
                             ),
                             const SizedBox(width: 14),
                             
                             // Massive Center Play Button
                             GestureDetector(
-                              onTap: () {
+                              onTap: () async {
                                 var provider = Provider.of<GameProvider>(context, listen: false);
-                                provider.startSpecificLevel(user.levelsCompleted + 1);
-                                Navigator.pushNamed(context, AppRouter.game);
+                                await provider.startSpecificLevel(user.levelsCompleted + 1);
+                                if (context.mounted) {
+                                  _navigate(AppRouter.game);
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
@@ -471,10 +499,12 @@ class _VillageScreenState extends State<VillageScreen> {
                             _buildSideButton(
                               icon: Icons.calendar_month_rounded, 
                               color: const Color(0xFF8B5A2B), 
-                              onTap: user.canPlayDailyChallenge() ? () {
+                              onTap: user.canPlayDailyChallenge() ? () async {
                                 var provider = Provider.of<GameProvider>(context, listen: false);
-                                provider.startDailyChallenge();
-                                Navigator.pushNamed(context, AppRouter.game);
+                                await provider.startDailyChallenge();
+                                if (context.mounted) {
+                                  _navigate(AppRouter.game);
+                                }
                               } : () {
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                   content: const Text('Come back tomorrow for a new Daily Challenge!'),
@@ -595,13 +625,17 @@ class _VillageScreenState extends State<VillageScreen> {
     return btn;
   }
 
-  void _showSettingsDialog(BuildContext context) {
-    showDialog(
+  void _showSettingsDialog(BuildContext context) async {
+    _game.pauseEngine();
+    await showDialog(
       context: context,
-      builder: (context) => Dialog(
+      useRootNavigator: true,
+      builder: (dialogCtx) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Container(
-          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 390, maxHeight: 660),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: const Color(0xFFFDF5E6), // Parchment
             borderRadius: BorderRadius.circular(24),
@@ -610,115 +644,231 @@ class _VillageScreenState extends State<VillageScreen> {
           ),
           child: Consumer<UserProvider>(
             builder: (context, user, child) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'SETTINGS',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                      fontSize: 28,
-                      color: const Color(0xFF5D4037),
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _buildSettingRow('Sound Effects', Icons.volume_up_rounded, user.soundEnabled, user.toggleSound),
-                  const SizedBox(height: 16),
-                  _buildSettingRow('Music', Icons.music_note_rounded, user.musicEnabled, user.toggleMusic),
-                  const SizedBox(height: 16),
-                  _buildSettingRow('Haptics', Icons.vibration_rounded, user.hapticsEnabled, user.toggleHaptics),
-                  
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRouter.tutorial);
-                    },
-                    icon: const Icon(Icons.school_rounded, color: Color(0xFFFFD54F)),
-                    label: Text(
-                      'HOW TO PLAY',
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'SETTINGS',
                       style: TextStyle(
                         fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                        letterSpacing: 1.5,
+                        fontSize: 26,
+                        color: const Color(0xFF5D4037),
+                        letterSpacing: 2,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5D4037),
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFF8B5A2B), width: 2),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    const SizedBox(height: 14),
+                    
+                    _buildSettingRow('Sound Effects', Icons.volume_up_rounded, user.soundEnabled, user.toggleSound),
+                    const SizedBox(height: 8),
+                    _buildSettingRow('Music', Icons.music_note_rounded, user.musicEnabled, user.toggleMusic),
+                    const SizedBox(height: 8),
+                    _buildSettingRow('Haptics', Icons.vibration_rounded, user.hapticsEnabled, user.toggleHaptics),
+                    const SizedBox(height: 8),
+                    _buildSettingRow('Daily Reminder', Icons.notifications_active_rounded, user.notificationsEnabled, user.toggleNotifications),
+                    
+                    const SizedBox(height: 14),
+
+                    // Rate App Button (Guaranteed single line with FittedBox)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          AppReviewService.openPlayStore();
+                        },
+                        icon: const Icon(Icons.star_rounded, color: Color(0xFFFFD54F), size: 20),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'RATE NUMBER HAVEN',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              letterSpacing: 0.8,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B), // Golden amber
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Purchases Restored', style: TextStyle(fontFamily: GoogleFonts.lilitaOne().fontFamily)),
+
+                    const SizedBox(height: 8),
+
+                    // Send Feedback Button (Guaranteed single line)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          AppReviewService.sendFeedback();
+                        },
+                        icon: const Icon(Icons.mark_email_read_rounded, color: Color(0xFF81C784), size: 19),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'SEND FEEDBACK',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              letterSpacing: 0.8,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // How to play button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(dialogCtx);
+                          _navigate(AppRouter.tutorial);
+                        },
+                        icon: const Icon(Icons.school_rounded, color: Color(0xFFFFD54F), size: 19),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'HOW TO PLAY',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              letterSpacing: 0.8,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5D4037),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFF8B5A2B), width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 8),
+
+                    // Restore Purchases
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          PurchaseService.restorePurchases(context: context, user: user);
+                        },
+                        icon: const Icon(Icons.restore_rounded, size: 19),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'RESTORE PURCHASES',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                              letterSpacing: 0.8,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00ACC1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(dialogCtx),
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7CB342),
-                      ));
-                    },
-                    icon: const Icon(Icons.restore_rounded),
-                    label: Text('RESTORE PURCHASES', style: TextStyle(fontFamily: GoogleFonts.lilitaOne().fontFamily)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00ACC1),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 9),
+                      ),
+                      child: Text('CLOSE', style: TextStyle(fontFamily: GoogleFonts.lilitaOne().fontFamily, fontSize: 16)),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7CB342),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    ),
-                    child: Text('CLOSE', style: TextStyle(fontFamily: GoogleFonts.lilitaOne().fontFamily, fontSize: 18)),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
         ).animate().scaleXY(begin: 0.8, end: 1.0, duration: 300.ms, curve: Curves.easeOutBack),
       ),
     );
+    if (mounted) {
+      _game.resumeEngine();
+    }
+  }
+
+  void _showFortuneWheel(BuildContext context, UserProvider user) async {
+    _game.pauseEngine();
+    await showDialog(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => FortuneWheelDialog(user: user),
+    );
+    if (mounted) {
+      _game.resumeEngine();
+    }
+  }
+
+  void _showAcornVault(BuildContext context, UserProvider user) async {
+    _game.pauseEngine();
+    await showDialog(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => AcornVaultDialog(user: user),
+    );
+    if (mounted) {
+      _game.resumeEngine();
+    }
   }
 
   Widget _buildSettingRow(String title, IconData icon, bool value, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE8E3D2), width: 2),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE8E3D2), width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF8B5A2B), size: 28),
-            const SizedBox(width: 16),
+            Icon(icon, color: const Color(0xFF8B5A2B), size: 24),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
                   fontFamily: GoogleFonts.lilitaOne().fontFamily,
                   color: const Color(0xFF5D4037),
-                  fontSize: 18,
+                  fontSize: 16,
                 ),
               ),
             ),
             Icon(
               value ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
               color: value ? const Color(0xFF7CB342) : Colors.grey,
-              size: 40,
+              size: 38,
             ),
           ],
         ),
@@ -744,12 +894,17 @@ class _VillageScreenState extends State<VillageScreen> {
     }
   }
 
-  void _showStarterGiftDialog(BuildContext context, UserProvider user) {
-    showDialog(
+  void _showStarterGiftDialog(BuildContext context, UserProvider user) async {
+    _game.pauseEngine();
+    await showDialog(
       context: context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (dialogContext) => StarterGiftDialog(user: user),
     );
+    if (mounted) {
+      _game.resumeEngine();
+    }
   }
 }
 

@@ -30,9 +30,13 @@ class NotificationService {
     }
   }
   
+  static Future<void> cancelAll() async {
+    await _notificationsPlugin.cancelAll();
+  }
+
   static Future<void> scheduleDailyReminder() async {
     // Cancel existing to avoid duplicates
-    await _notificationsPlugin.cancelAll();
+    await cancelAll();
     
     // Schedule for 9:00 AM every day
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);

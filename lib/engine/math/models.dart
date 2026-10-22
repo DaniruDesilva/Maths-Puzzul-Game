@@ -241,4 +241,26 @@ class MathPuzzle {
       trayNumbers: (json['tray'] as List).cast<int>(),
     );
   }
+
+  MathPuzzle copyWith({
+    int? id,
+    int? rows,
+    int? cols,
+    int? seed,
+    Difficulty? difficulty,
+    List<List<MathCell>>? grid,
+    List<MathEquation>? equations,
+    List<int>? trayNumbers,
+  }) {
+    return MathPuzzle(
+      id: id ?? this.id,
+      rows: rows ?? this.rows,
+      cols: cols ?? this.cols,
+      seed: seed ?? this.seed,
+      difficulty: difficulty ?? this.difficulty,
+      grid: grid ?? this.grid,
+      equations: equations ?? this.equations,
+      trayNumbers: trayNumbers ?? this.trayNumbers,
+    );
+  }
 }

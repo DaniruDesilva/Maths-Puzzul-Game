@@ -300,7 +300,7 @@ class _AcornVaultDialogState extends State<AcornVaultDialog> {
                             const Icon(Icons.lock_open_rounded, color: Color(0xFFFFD54F), size: 22),
                             const SizedBox(width: 8),
                             Text(
-                              'CRACK VAULT (\$1.49)',
+                              'CRACK VAULT (${PurchaseService.getPrice(PurchaseService.productAcornVault, fallbackPrice: "\$1.49")})',
                               style: GoogleFonts.lilitaOne(
                                 color: Colors.white,
                                 fontSize: 16,

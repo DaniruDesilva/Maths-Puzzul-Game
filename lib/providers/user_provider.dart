@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/database_helper.dart';
 import '../services/sound_service.dart';
 import '../services/purchase_service.dart';
+import '../services/notification_service.dart';
 import 'package:vibration/vibration.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -41,6 +42,7 @@ class UserProvider extends ChangeNotifier {
   bool soundEnabled = true;
   bool musicEnabled = true;
   bool hapticsEnabled = true;
+  bool notificationsEnabled = true;
   
   bool isLoading = true;
   final Completer<void> _initCompleter = Completer<void>();
@@ -164,6 +166,7 @@ class UserProvider extends ChangeNotifier {
     soundEnabled = _prefs!.getBool('setting_sound') ?? true;
     musicEnabled = _prefs!.getBool('setting_music') ?? true;
     hapticsEnabled = _prefs!.getBool('setting_haptics') ?? true;
+    notificationsEnabled = _prefs!.getBool('setting_notifications') ?? true;
     
     SoundService.setSoundEnabled(soundEnabled);
     SoundService.setMusicEnabled(musicEnabled);
@@ -690,6 +693,19 @@ class UserProvider extends ChangeNotifier {
       if (await Vibration.hasVibrator() == true) {
         Vibration.vibrate(duration: 50);
       }
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleNotifications() async {
+    notificationsEnabled = !notificationsEnabled;
+    if (_prefs != null) {
+      await _prefs!.setBool('setting_notifications', notificationsEnabled);
+    }
+    if (notificationsEnabled) {
+      await NotificationService.scheduleDailyReminder();
+    } else {
+      await NotificationService.cancelAll();
     }
     notifyListeners();
   }

@@ -105,6 +105,9 @@ void main() {
       expect(find.text('SPECIAL BUNDLES & PERKS'), findsOneWidget);
       expect(find.text('Cozy Starter Pack'), findsOneWidget);
       expect(find.text('Master Village Bundle'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.binding.setSurfaceSize(null);
     });
   });
 }

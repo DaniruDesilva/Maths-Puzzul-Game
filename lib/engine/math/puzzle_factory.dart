@@ -12,7 +12,7 @@ class MathPuzzleFactory {
     required int id,
     required int seed,
     required Difficulty difficulty,
-    int maxRetries = 25,
+    int maxRetries = 2,
   }) {
     final rng = Random(seed);
 
@@ -156,11 +156,11 @@ class MathPuzzleFactory {
         );
       case Difficulty.expert:
         return const _DifficultyConfig(
-          maxGridSize: 13,
-          equationCount: 11,
-          blankRatio: 0.78,
-          allowLength7: true,
-          maxLogicTier: 5,
+          maxGridSize: 10,
+          equationCount: 6,
+          blankRatio: 0.60,
+          allowLength7: false,
+          maxLogicTier: 4,
         );
     }
   }
