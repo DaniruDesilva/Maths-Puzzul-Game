@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:number_haven/services/onboarding_service.dart';
 import 'package:number_haven/ui/game/interactive_onboarding_overlay.dart';
+import 'package:number_haven/ui/common/cartoon_hand_pointer.dart';
 import 'package:number_haven/providers/user_provider.dart';
 
 void main() {
@@ -213,6 +214,31 @@ void main() {
       expect(user.hasCompletedVillageTutorial, isFalse);
     });
 
+    test('completeCottageTutorial and resetCottageTutorial work', () {
+      final user = UserProvider();
+      expect(user.hasCompletedCottageTutorial, isFalse);
+
+      user.completeCottageTutorial();
+      expect(user.hasCompletedCottageTutorial, isTrue);
+
+      user.resetCottageTutorial();
+      expect(user.hasCompletedCottageTutorial, isFalse);
+    });
+
+    test('showCottageTutorial activates when user has completed level 1 and cottage is unbuilt', () {
+      final user = UserProvider();
+      expect(user.showCottageTutorial, isFalse);
+
+      // Simulate completing level 1 with bonus coins
+      user.levelsCompleted = 1;
+      user.coins = 180;
+      expect(user.showCottageTutorial, isTrue);
+
+      // Building cottage deactivates tutorial
+      user.villageBuildings['cottage'] = 1;
+      expect(user.showCottageTutorial, isFalse);
+    });
+
     test('completeInteractiveOnboarding updates flags', () async {
       final user = UserProvider();
       expect(user.hasCompletedInteractiveOnboarding, isFalse);
@@ -256,7 +282,8 @@ void main() {
       );
 
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byIcon(Icons.touch_app_rounded), findsNWidgets(2));
+      expect(find.byType(AnimatedHandGesture), findsNWidgets(2));
+      expect(find.byType(CartoonHandPointer), findsNWidgets(2));
     });
 
     testWidgets('VillageTutorialCard renders, fires onPlay and onSkip', (tester) async {
@@ -343,6 +370,56 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.close_rounded));
       expect(dismissed, isTrue);
+    });
+
+    testWidgets('CartoonHandPointer renders with label and handles tap and dismiss', (tester) async {
+      bool tapped = false;
+      bool dismissed = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CartoonHandPointer(
+              direction: HandPointerDirection.tapping,
+              label: 'Tap to build! 🪙',
+              onTap: () => tapped = true,
+              onDismiss: () => dismissed = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Tap to build! 🪙'), findsOneWidget);
+
+      await tester.tap(find.byType(CartoonHandPointer));
+      expect(tapped, isTrue);
+
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      expect(dismissed, isTrue);
+    });
+
+    testWidgets('TutorialSpeechBubble renders title, message and fires onSkip', (tester) async {
+      bool skipped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TutorialSpeechBubble(
+              title: 'Build Your First Cottage! 🏡',
+              message: 'You earned coins! Tap the plot to restore the cozy cottage for Bunny!',
+              onSkip: () => skipped = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      expect(find.text('Build Your First Cottage! 🏡'), findsOneWidget);
+      expect(find.text('You earned coins! Tap the plot to restore the cozy cottage for Bunny!'), findsOneWidget);
+
+      await tester.tap(find.text('Skip'));
+      expect(skipped, isTrue);
     });
   });
 }

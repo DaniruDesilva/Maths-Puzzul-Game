@@ -110,10 +110,17 @@ class UserProvider extends ChangeNotifier {
 
   // Interactive Level 1 Onboarding & In-game Tooltip Flags
   bool hasCompletedVillageTutorial = false;
+  bool hasCompletedCottageTutorial = false;
   bool hasCompletedInteractiveOnboarding = false;
   bool hasSeenNotesTooltip = false;
   bool hasSeenHintTooltip = false;
   bool hasSeenMistakeTooltip = false;
+
+  /// True when the player has earned enough coins (>= 100) and hasn't built the first cottage yet
+  bool get showCottageTutorial =>
+      !hasCompletedCottageTutorial &&
+      (levelsCompleted >= 1 || coins >= 100) &&
+      (villageBuildings['cottage'] ?? 0) == 0;
 
   SharedPreferences? _prefs;
 
@@ -177,6 +184,7 @@ class UserProvider extends ChangeNotifier {
     
     // Onboarding & Tooltip preferences
     hasCompletedVillageTutorial = _prefs!.getBool('has_completed_village_tutorial') ?? false;
+    hasCompletedCottageTutorial = _prefs!.getBool('has_completed_cottage_tutorial') ?? false;
     hasCompletedInteractiveOnboarding = _prefs!.getBool('has_completed_interactive_onboarding') ?? false;
     hasSeenNotesTooltip = _prefs!.getBool('has_seen_notes_tooltip') ?? false;
     hasSeenHintTooltip = _prefs!.getBool('has_seen_hint_tooltip') ?? false;
@@ -734,10 +742,28 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void completeCottageTutorial() {
+    hasCompletedCottageTutorial = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_cottage_tutorial', true);
+    }
+    notifyListeners();
+  }
+
+  void resetCottageTutorial() {
+    hasCompletedCottageTutorial = false;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_cottage_tutorial', false);
+    }
+    notifyListeners();
+  }
+
   void resetVillageTutorial() {
     hasCompletedVillageTutorial = false;
+    hasCompletedCottageTutorial = false;
     if (_prefs != null) {
       _prefs!.setBool('has_completed_village_tutorial', false);
+      _prefs!.setBool('has_completed_cottage_tutorial', false);
     }
     notifyListeners();
   }

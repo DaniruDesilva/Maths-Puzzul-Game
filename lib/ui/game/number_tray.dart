@@ -257,16 +257,16 @@ class MathNumberTray extends StatelessWidget {
             ),
           ),
 
-          // Animated hand gesture pointing down at target candidate tile
+          // Animated cartoon hand gesture pointing down at target candidate tile
           if (isTutorialNumber)
             const Positioned(
               left: 0,
               right: 0,
-              top: -28,
+              top: -42,
               child: Center(
                 child: AnimatedHandGesture(
                   direction: HandGestureDirection.down,
-                  size: 26,
+                  size: 36,
                   color: Color(0xFFFBBF24),
                 ),
               ),

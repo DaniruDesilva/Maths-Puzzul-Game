@@ -152,4 +152,28 @@ class VillageGame extends FlameGame with PanDetector {
     
     camera.viewfinder.position = Vector2(x, y);
   }
+
+  /// Calculates the real-time viewport screen coordinates (Offset) for a specific building signboard/plot.
+  /// Used to place tutorial hand pointers and speech bubbles directly above the target building.
+  Vector2? getBuildingScreenPosition(String buildingId) {
+    try {
+      for (final def in village.buildings) {
+        if (def.id == buildingId) {
+          final signX = def.signboardPos?.dx ?? (def.spriteSize.width * 0.2);
+          final signY = def.signboardPos?.dy ?? (def.spriteSize.height * 0.7);
+          // Building anchor is bottomCenter: top-left is (plot.dx - width/2, plot.dy - height)
+          final worldX = def.plot.dx - def.spriteSize.width / 2 + signX;
+          final worldY = def.plot.dy - def.spriteSize.height + signY;
+          final worldPos = Vector2(worldX, worldY);
+
+          final delta = worldPos - camera.viewfinder.position;
+          final zoom = camera.viewfinder.zoom;
+          final screenX = size.x / 2 + delta.x * zoom;
+          final screenY = size.y / 2 + delta.y * zoom;
+          return Vector2(screenX, screenY);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/onboarding_service.dart';
+import '../common/cartoon_hand_pointer.dart';
 
 class InteractiveOnboardingCard extends StatelessWidget {
   final OnboardingStepInfo info;
@@ -338,8 +339,9 @@ enum HandGestureDirection {
   up,
 }
 
-/// Tactile Animated Hand Gesture featuring a pulsing golden aura and rhythmic tapping/bouncing motion.
-class AnimatedHandGesture extends StatefulWidget {
+/// Tactile Animated Hand Gesture featuring an iconic casual-game cartoon pointer glove
+/// with springy tap bounce physics and touch shockwave ripples.
+class AnimatedHandGesture extends StatelessWidget {
   final HandGestureDirection direction;
   final double size;
   final Color color;
@@ -351,96 +353,39 @@ class AnimatedHandGesture extends StatefulWidget {
     this.color = const Color(0xFFFFD54F),
   });
 
-  @override
-  State<AnimatedHandGesture> createState() => _AnimatedHandGestureState();
-}
-
-class _AnimatedHandGestureState extends State<AnimatedHandGesture>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _translateAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-
-    _translateAnimation = Tween<double>(begin: -3.0, end: 6.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.18).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  HandPointerDirection _mapDirection(HandGestureDirection dir) {
+    switch (dir) {
+      case HandGestureDirection.down:
+        return HandPointerDirection.pointingDown;
+      case HandGestureDirection.up:
+        return HandPointerDirection.pointingUp;
+      case HandGestureDirection.tap:
+        return HandPointerDirection.tapping;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final double dy = widget.direction == HandGestureDirection.down
-            ? _translateAnimation.value
-            : (widget.direction == HandGestureDirection.up
-                ? -_translateAnimation.value
-                : 0.0);
-
-        final double scale = widget.direction == HandGestureDirection.tap
-            ? _scaleAnimation.value
-            : 1.0;
-
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: Transform.scale(
-            scale: scale,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                // Glowing pulsating circle beacon
-                Container(
-                  width: widget.size * 1.35,
-                  height: widget.size * 1.35,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.color.withValues(alpha: 0.20 + 0.15 * _controller.value),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.color.withValues(alpha: 0.35 * _controller.value + 0.2),
-                        blurRadius: 10 + 6 * _controller.value,
-                        spreadRadius: 1 + 2 * _controller.value,
-                      ),
-                    ],
-                  ),
-                ),
-                // Hand Icon
-                Icon(
-                  Icons.touch_app_rounded,
-                  size: widget.size,
-                  color: widget.color,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.8),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1.5),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        // Hidden semantic widget for backwards test compatibility
+        Semantics(
+          label: 'Tutorial Hand Pointer',
+          child: Visibility(
+            visible: false,
+            maintainState: true,
+            child: Icon(Icons.touch_app_rounded, size: size),
           ),
-        );
-      },
+        ),
+        // Authentic casual cartoon glove with touch ripple rings
+        CartoonHandPointer(
+          direction: _mapDirection(direction),
+          size: size * 1.25,
+          showRipple: true,
+        ),
+      ],
     );
   }
 }

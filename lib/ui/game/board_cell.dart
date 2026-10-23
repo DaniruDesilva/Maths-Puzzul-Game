@@ -419,11 +419,11 @@ class BoardCellWidget extends StatelessWidget {
         );
       }
       if (isTutorialTarget && !isSelected) {
-        // Animated tapping hand gesture with golden beacon to invite player's tap
+        // Animated tapping cartoon hand pointer inviting player to select empty slot
         return Center(
           child: AnimatedHandGesture(
             direction: HandGestureDirection.tap,
-            size: size * 0.52,
+            size: size * 0.60,
             color: const Color(0xFFFBBF24),
           ),
         );

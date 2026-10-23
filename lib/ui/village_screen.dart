@@ -17,7 +17,7 @@ import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
 import 'village/overlays/fortune_wheel_dialog.dart';
 import 'village/overlays/acorn_vault_dialog.dart';
-import 'game/interactive_onboarding_overlay.dart';
+import 'common/cartoon_hand_pointer.dart';
 
 class VillageScreen extends StatefulWidget {
   final VillageDef village;
@@ -44,24 +44,26 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
     _game = VillageGame(
       village: widget.village, 
       userProvider: user,
-      onBuildingTapped: (def) async {
-        _game.pauseEngine();
-        await showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          useRootNavigator: true,
-          builder: (context) => BuildSheet(buildingDef: def),
-        );
-        if (mounted) {
-          _game.resumeEngine();
-        }
-      },
+      onBuildingTapped: _openBuildingSheet,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkStarterGiftBonus();
     });
+  }
+
+  Future<void> _openBuildingSheet(BuildingDef def) async {
+    _game.pauseEngine();
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (context) => BuildSheet(buildingDef: def),
+    );
+    if (mounted) {
+      _game.resumeEngine();
+    }
   }
 
   @override
@@ -438,21 +440,16 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Village Tutorial Card with animated hand gesture pointing at PLAY
+                    // Sleek floating callout speech bubble above PLAY button
                     if (showVillageTutorial)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: VillageTutorialCard(
-                          onPlay: () async {
-                            user.completeVillageTutorial();
-                            var provider = Provider.of<GameProvider>(context, listen: false);
-                            await provider.startSpecificLevel(user.levelsCompleted + 1);
-                            if (context.mounted) {
-                              _navigate(AppRouter.game);
-                            }
-                          },
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: TutorialSpeechBubble(
+                          title: 'Welcome to Number Haven! 🌿',
+                          message: 'Tap PLAY below to start your first math crossword puzzle and earn coins!',
+                          icon: Icons.explore_rounded,
                           onSkip: () => user.completeVillageTutorial(),
-                        ),
+                        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.15, end: 0),
                       ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -483,17 +480,30 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                                   _navigate(AppRouter.game);
                                 }
                               },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF7CB342),
-                                  borderRadius: BorderRadius.circular(32),
-                                  border: Border.all(color: const Color(0xFF33691E), width: 4),
-                                  boxShadow: const [
-                                    BoxShadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 10)),
-                                    BoxShadow(color: Color(0xFFAED581), spreadRadius: -4), // Inner highlight
-                                  ],
-                                ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF7CB342),
+                                      borderRadius: BorderRadius.circular(32),
+                                      border: Border.all(
+                                        color: showVillageTutorial ? const Color(0xFFFBBF24) : const Color(0xFF33691E),
+                                        width: 4,
+                                      ),
+                                      boxShadow: [
+                                        if (showVillageTutorial)
+                                          BoxShadow(
+                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.7),
+                                            blurRadius: 24,
+                                            spreadRadius: 3,
+                                          ),
+                                        const BoxShadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 10)),
+                                        const BoxShadow(color: Color(0xFFAED581), spreadRadius: -4), // Inner highlight
+                                      ],
+                                    ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -514,6 +524,18 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                                   ],
                                 ),
                               ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(begin: 1.0, end: 1.05, duration: 1.5.seconds, curve: Curves.easeInOut),
+                                  // Floating cartoon pointer hand tapping down into the PLAY button
+                                  if (showVillageTutorial)
+                                    const Positioned(
+                                      top: -44,
+                                      child: CartoonHandPointer(
+                                        direction: HandPointerDirection.pointingDown,
+                                        size: 54,
+                                        showRipple: true,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                             const SizedBox(width: 14),
                             
@@ -545,6 +567,52 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                 );
               }
             ),
+          ),
+
+          // Cottage Building Tutorial Overlay (guides player to build their first Cottage with bonus coins)
+          Consumer<UserProvider>(
+            builder: (context, user, _) {
+              if (!user.showCottageTutorial) return const SizedBox.shrink();
+              final screenSize = MediaQuery.of(context).size;
+              final cottagePos = _game.getBuildingScreenPosition('cottage');
+              final double targetX = cottagePos?.x ?? (screenSize.width * 0.30);
+              final double targetY = cottagePos?.y ?? (screenSize.height * 0.35);
+
+              final cottageDef = widget.village.buildings.firstWhere(
+                (b) => b.id == 'cottage',
+                orElse: () => widget.village.buildings.first,
+              );
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Floating Callout Speech Bubble near the Cottage plot
+                  Positioned(
+                    left: (targetX - 120).clamp(16.0, screenSize.width - 340),
+                    top: (targetY - 105).clamp(90.0, screenSize.height - 250),
+                    child: TutorialSpeechBubble(
+                      title: 'Build Your First Cottage! 🏡',
+                      message: 'You earned coins! Tap the plot to restore the cozy cottage for Bunny!',
+                      icon: Icons.home_rounded,
+                      onSkip: () => user.completeCottageTutorial(),
+                    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.15, end: 0),
+                  ),
+
+                  // Cartoon Hand Pointer tapping directly on the cottage signboard/plot
+                  Positioned(
+                    left: targetX - 35,
+                    top: targetY - 45,
+                    child: CartoonHandPointer(
+                      direction: HandPointerDirection.tapping,
+                      size: 58,
+                      label: 'Tap to build! 🪙',
+                      onTap: () => _openBuildingSheet(cottageDef),
+                      onDismiss: () => user.completeCottageTutorial(),
+                    ).animate().fadeIn(duration: 350.ms),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -920,10 +988,10 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                     user.resetVillageTutorial();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('Village Tutorial activated! Tap the PLAY button to start.'),
+                        content: const Text('Village & Cottage Tutorial activated! Tap PLAY or the Cottage plot.'),
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: const Color(0xFF5D4037),
-                        duration: const Duration(seconds: 2),
+                        duration: const Duration(seconds: 3),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     );

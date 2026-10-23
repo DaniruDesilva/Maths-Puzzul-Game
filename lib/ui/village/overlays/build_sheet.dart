@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/village_data.dart';
 import '../../../providers/user_provider.dart';
+import '../../common/cartoon_hand_pointer.dart';
 import '../../store_screen.dart';
 
 class BuildSheet extends StatelessWidget {
@@ -19,6 +20,7 @@ class BuildSheet extends StatelessWidget {
         
         int cost = isMaxed ? 0 : buildingDef.costs[currentStage];
         bool canAfford = user.coins >= cost;
+        final isCottageTutorial = user.showCottageTutorial && buildingDef.id == 'cottage';
         
         String perkText = '';
         if (isMaxed) {
@@ -181,7 +183,17 @@ class BuildSheet extends StatelessWidget {
                     ),
                   ),
                 ] else if (!isMaxed) ...[
-                  if (canAfford)
+                  if (canAfford) ...[
+                    if (isCottageTutorial) ...[
+                      const Center(
+                        child: CartoonHandPointer(
+                          direction: HandPointerDirection.pointingDown,
+                          size: 48,
+                          label: 'Tap to build! 🏡',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -189,6 +201,9 @@ class BuildSheet extends StatelessWidget {
                         onPressed: () {
                           user.spendCoins(cost);
                           user.upgradeBuilding(buildingDef.id);
+                          if (isCottageTutorial) {
+                            user.completeCottageTutorial();
+                          }
                           Navigator.pop(context); // Close sheet
                         },
                         style: ElevatedButton.styleFrom(
@@ -197,6 +212,9 @@ class BuildSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(28),
                           ),
                           elevation: 4,
+                          side: isCottageTutorial
+                              ? const BorderSide(color: Color(0xFFFFD54F), width: 2.5)
+                              : null,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -227,7 +245,8 @@ class BuildSheet extends StatelessWidget {
                           ],
                         ),
                       ),
-                    )
+                    ),
+                  ]
                   else
                     Row(
                       children: [
