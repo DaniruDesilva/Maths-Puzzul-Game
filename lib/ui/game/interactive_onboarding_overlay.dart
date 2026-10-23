@@ -185,43 +185,40 @@ class InteractiveOnboardingCard extends StatelessWidget {
   }
 
   Widget _buildAnimatedPointerIcon(OnboardingStepInfo info) {
-    final IconData iconData;
-    final Color iconColor;
-
     switch (info.step) {
       case OnboardingStep.selectFirstCell:
       case OnboardingStep.selectSecondCell:
       case OnboardingStep.selectThirdCell:
-        iconData = Icons.touch_app_rounded;
-        iconColor = const Color(0xFFFBBF24);
-        break;
+        return const AnimatedHandGesture(
+          direction: HandGestureDirection.tap,
+          size: 22,
+          color: Color(0xFFFBBF24),
+        );
       case OnboardingStep.placeFirstNumber:
       case OnboardingStep.placeSecondNumber:
       case OnboardingStep.placeThirdNumber:
-        iconData = Icons.arrow_downward_rounded;
-        iconColor = const Color(0xFF34D399);
-        break;
+        return const AnimatedHandGesture(
+          direction: HandGestureDirection.down,
+          size: 22,
+          color: Color(0xFF34D399),
+        );
       case OnboardingStep.completed:
-        iconData = Icons.star_rounded;
-        iconColor = const Color(0xFFFBBF24);
-        break;
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFBBF24).withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFFBBF24), width: 1.2),
+          ),
+          child: const Icon(
+            Icons.star_rounded,
+            color: Color(0xFFFBBF24),
+            size: 16,
+          ),
+        )
+            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+            .scaleXY(begin: 0.9, end: 1.15, duration: 700.ms);
     }
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: iconColor, width: 1.2),
-      ),
-      child: Icon(
-        iconData,
-        color: iconColor,
-        size: 14,
-      ),
-    )
-        .animate(onPlay: (controller) => controller.repeat(reverse: true))
-        .scaleXY(begin: 0.9, end: 1.15, duration: 700.ms);
   }
 }
 
@@ -332,5 +329,264 @@ class InGameContextualTooltip extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn(duration: 250.ms).slideY(begin: 0.2, end: 0, duration: 250.ms);
+  }
+}
+
+enum HandGestureDirection {
+  down,
+  tap,
+  up,
+}
+
+/// Tactile Animated Hand Gesture featuring a pulsing golden aura and rhythmic tapping/bouncing motion.
+class AnimatedHandGesture extends StatefulWidget {
+  final HandGestureDirection direction;
+  final double size;
+  final Color color;
+
+  const AnimatedHandGesture({
+    super.key,
+    this.direction = HandGestureDirection.tap,
+    this.size = 32,
+    this.color = const Color(0xFFFFD54F),
+  });
+
+  @override
+  State<AnimatedHandGesture> createState() => _AnimatedHandGestureState();
+}
+
+class _AnimatedHandGestureState extends State<AnimatedHandGesture>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _translateAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _translateAnimation = Tween<double>(begin: -3.0, end: 6.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.18).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final double dy = widget.direction == HandGestureDirection.down
+            ? _translateAnimation.value
+            : (widget.direction == HandGestureDirection.up
+                ? -_translateAnimation.value
+                : 0.0);
+
+        final double scale = widget.direction == HandGestureDirection.tap
+            ? _scaleAnimation.value
+            : 1.0;
+
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(
+            scale: scale,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                // Glowing pulsating circle beacon
+                Container(
+                  width: widget.size * 1.35,
+                  height: widget.size * 1.35,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.color.withValues(alpha: 0.20 + 0.15 * _controller.value),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.color.withValues(alpha: 0.35 * _controller.value + 0.2),
+                        blurRadius: 10 + 6 * _controller.value,
+                        spreadRadius: 1 + 2 * _controller.value,
+                      ),
+                    ],
+                  ),
+                ),
+                // Hand Icon
+                Icon(
+                  Icons.touch_app_rounded,
+                  size: widget.size,
+                  color: widget.color,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.8),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1.5),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Cozy Village Tutorial banner guiding the player to the big PLAY button with an animated hand gesture
+class VillageTutorialCard extends StatelessWidget {
+  final VoidCallback onPlay;
+  final VoidCallback onSkip;
+
+  const VillageTutorialCard({
+    super.key,
+    required this.onPlay,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2E1C11), // Warm rustic walnut
+            Color(0xFF1D1109), // Aged mahogany
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFF59E0B),
+          width: 2.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+            blurRadius: 14,
+            spreadRadius: 2,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header: Pill Badge + Skip button
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7CB342).withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF8BC34A), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.explore_rounded, color: Color(0xFFAED581), size: 13),
+                    const SizedBox(width: 4),
+                    Text(
+                      'VILLAGE TUTORIAL',
+                      style: GoogleFonts.baloo2(
+                        color: const Color(0xFFDCEDC8),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              // Skip Tutorial button
+              GestureDetector(
+                onTap: onSkip,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white24, width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Skip',
+                        style: GoogleFonts.baloo2(
+                          color: const Color(0xFFE2E8F0),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.close_rounded, color: Color(0xFFCBD5E1), size: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Title & Description
+          Text(
+            'Welcome to Number Haven! 🌿',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.lilitaOne(
+              color: const Color(0xFFFFD54F),
+              fontSize: 17,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tap PLAY below to start your first math crossword puzzle and earn coins to restore your cozy village!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.baloo2(
+              color: const Color(0xFFE2E8F0),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Animated Hand Gesture pointing down at PLAY
+          GestureDetector(
+            onTap: onPlay,
+            child: const Center(
+              child: AnimatedHandGesture(
+                direction: HandGestureDirection.down,
+                size: 34,
+                color: Color(0xFFFFD54F),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.15, end: 0, duration: 350.ms);
   }
 }

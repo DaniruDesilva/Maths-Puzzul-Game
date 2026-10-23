@@ -202,6 +202,17 @@ void main() {
   });
 
   group('UserProvider Onboarding Flags & Methods', () {
+    test('completeVillageTutorial and resetVillageTutorial work', () {
+      final user = UserProvider();
+      expect(user.hasCompletedVillageTutorial, isFalse);
+
+      user.completeVillageTutorial();
+      expect(user.hasCompletedVillageTutorial, isTrue);
+
+      user.resetVillageTutorial();
+      expect(user.hasCompletedVillageTutorial, isFalse);
+    });
+
     test('completeInteractiveOnboarding updates flags', () async {
       final user = UserProvider();
       expect(user.hasCompletedInteractiveOnboarding, isFalse);
@@ -230,6 +241,51 @@ void main() {
   });
 
   group('Interactive Onboarding Widgets Test', () {
+    testWidgets('AnimatedHandGesture renders for both tap and down', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                AnimatedHandGesture(direction: HandGestureDirection.tap),
+                AnimatedHandGesture(direction: HandGestureDirection.down),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byIcon(Icons.touch_app_rounded), findsNWidgets(2));
+    });
+
+    testWidgets('VillageTutorialCard renders, fires onPlay and onSkip', (tester) async {
+      bool played = false;
+      bool skipped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VillageTutorialCard(
+              onPlay: () => played = true,
+              onSkip: () => skipped = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.text('Welcome to Number Haven! 🌿'), findsOneWidget);
+      expect(find.text('VILLAGE TUTORIAL'), findsOneWidget);
+
+      await tester.tap(find.text('Skip'));
+      expect(skipped, isTrue);
+
+      await tester.tap(find.byType(AnimatedHandGesture));
+      expect(played, isTrue);
+    });
+
     testWidgets('InteractiveOnboardingCard renders and fires onSkip', (tester) async {
       bool skipped = false;
       const stepInfo = OnboardingStepInfo(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../engine/math/models.dart';
+import 'interactive_onboarding_overlay.dart';
 
 class BoardCellWidget extends StatelessWidget {
   final MathCell cell;
@@ -418,12 +419,12 @@ class BoardCellWidget extends StatelessWidget {
         );
       }
       if (isTutorialTarget && !isSelected) {
-        // Distinct golden touch beacon to invite the player's tap
+        // Animated tapping hand gesture with golden beacon to invite player's tap
         return Center(
-          child: Icon(
-            Icons.touch_app_rounded,
+          child: AnimatedHandGesture(
+            direction: HandGestureDirection.tap,
+            size: size * 0.52,
             color: const Color(0xFFFBBF24),
-            size: size * 0.46,
           ),
         );
       }

@@ -109,6 +109,7 @@ class UserProvider extends ChangeNotifier {
   Map<int, int> levelStars = {};
 
   // Interactive Level 1 Onboarding & In-game Tooltip Flags
+  bool hasCompletedVillageTutorial = false;
   bool hasCompletedInteractiveOnboarding = false;
   bool hasSeenNotesTooltip = false;
   bool hasSeenHintTooltip = false;
@@ -175,8 +176,8 @@ class UserProvider extends ChangeNotifier {
     notificationsEnabled = _prefs!.getBool('setting_notifications') ?? true;
     
     // Onboarding & Tooltip preferences
-    hasCompletedInteractiveOnboarding = _prefs!.getBool('has_completed_interactive_onboarding') ??
-        (_prefs!.getBool('has_seen_tutorial') ?? (levelsCompleted > 0));
+    hasCompletedVillageTutorial = _prefs!.getBool('has_completed_village_tutorial') ?? false;
+    hasCompletedInteractiveOnboarding = _prefs!.getBool('has_completed_interactive_onboarding') ?? false;
     hasSeenNotesTooltip = _prefs!.getBool('has_seen_notes_tooltip') ?? false;
     hasSeenHintTooltip = _prefs!.getBool('has_seen_hint_tooltip') ?? false;
     hasSeenMistakeTooltip = _prefs!.getBool('has_seen_mistake_tooltip') ?? false;
@@ -721,6 +722,22 @@ class UserProvider extends ChangeNotifier {
       await NotificationService.showConfirmationNotification();
     } else {
       await NotificationService.cancelAll();
+    }
+    notifyListeners();
+  }
+
+  void completeVillageTutorial() {
+    hasCompletedVillageTutorial = true;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_village_tutorial', true);
+    }
+    notifyListeners();
+  }
+
+  void resetVillageTutorial() {
+    hasCompletedVillageTutorial = false;
+    if (_prefs != null) {
+      _prefs!.setBool('has_completed_village_tutorial', false);
     }
     notifyListeners();
   }

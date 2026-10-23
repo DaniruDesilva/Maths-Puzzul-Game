@@ -1351,9 +1351,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(sheetContext);
-                      provider.replayInteractiveTutorial();
+                      final user = Provider.of<UserProvider>(context, listen: false);
+                      user.resetInteractiveOnboarding();
+                      await provider.replayInteractiveTutorial();
                     },
                   ),
                 ),

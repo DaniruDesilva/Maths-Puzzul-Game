@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/game_provider.dart';
+import 'interactive_onboarding_overlay.dart';
 
 class MathNumberTray extends StatelessWidget {
   final GameProvider provider;
@@ -78,7 +79,12 @@ class MathNumberTray extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: isNotes ? 6 : 8),
+      padding: EdgeInsets.only(
+        left: 10,
+        right: 10,
+        bottom: isNotes ? 6 : 8,
+        top: tutorialTargetNumber != null ? 24 : (isNotes ? 6 : 8),
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -142,6 +148,7 @@ class MathNumberTray extends StatelessWidget {
             ),
           Center(
             child: SingleChildScrollView(
+              clipBehavior: Clip.none,
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: Row(
@@ -250,27 +257,17 @@ class MathNumberTray extends StatelessWidget {
             ),
           ),
 
-          // Tutorial pointer badge above target candidate
+          // Animated hand gesture pointing down at target candidate tile
           if (isTutorialNumber)
-            Positioned(
+            const Positioned(
               left: 0,
               right: 0,
-              top: -12,
+              top: -28,
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFBBF24),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Color(0xAA000000), blurRadius: 4),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.arrow_downward_rounded,
-                    color: Color(0xFF451A03),
-                    size: 13,
-                  ),
+                child: AnimatedHandGesture(
+                  direction: HandGestureDirection.down,
+                  size: 26,
+                  color: Color(0xFFFBBF24),
                 ),
               ),
             ),

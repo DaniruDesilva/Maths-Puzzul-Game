@@ -17,6 +17,7 @@ import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
 import 'village/overlays/fortune_wheel_dialog.dart';
 import 'village/overlays/acorn_vault_dialog.dart';
+import 'game/interactive_onboarding_overlay.dart';
 
 class VillageScreen extends StatefulWidget {
   final VillageDef village;
@@ -432,9 +433,27 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
               right: 0,
               child: Consumer<UserProvider>(
               builder: (context, user, _) {
+                final showVillageTutorial = !user.hasCompletedVillageTutorial;
+
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Village Tutorial Card with animated hand gesture pointing at PLAY
+                    if (showVillageTutorial)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: VillageTutorialCard(
+                          onPlay: () async {
+                            user.completeVillageTutorial();
+                            var provider = Provider.of<GameProvider>(context, listen: false);
+                            await provider.startSpecificLevel(user.levelsCompleted + 1);
+                            if (context.mounted) {
+                              _navigate(AppRouter.game);
+                            }
+                          },
+                          onSkip: () => user.completeVillageTutorial(),
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: FittedBox(
@@ -455,6 +474,9 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                             // Massive Center Play Button
                             GestureDetector(
                               onTap: () async {
+                                if (showVillageTutorial) {
+                                  user.completeVillageTutorial();
+                                }
                                 var provider = Provider.of<GameProvider>(context, listen: false);
                                 await provider.startSpecificLevel(user.levelsCompleted + 1);
                                 if (context.mounted) {
@@ -856,19 +878,23 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                 ),
               ),
               const SizedBox(height: 18),
-              // Interactive option
+              // 1. Interactive Gameplay option
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(choiceCtx);
+                    final user = Provider.of<UserProvider>(context, listen: false);
+                    user.resetInteractiveOnboarding();
                     var provider = Provider.of<GameProvider>(context, listen: false);
-                    provider.replayInteractiveTutorial();
-                    _navigate(AppRouter.game);
+                    await provider.replayInteractiveTutorial();
+                    if (context.mounted) {
+                      _navigate(AppRouter.game);
+                    }
                   },
                   icon: const Icon(Icons.touch_app_rounded, color: Colors.white, size: 20),
                   label: Text(
-                    'PLAY INTERACTIVE TUTORIAL',
+                    'PLAY GAMEPLAY TUTORIAL',
                     style: TextStyle(
                       fontFamily: GoogleFonts.lilitaOne().fontFamily,
                       fontSize: 13,
@@ -884,7 +910,43 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                 ),
               ),
               const SizedBox(height: 10),
-              // Slides option
+              // 2. Village tutorial option
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(choiceCtx);
+                    final user = Provider.of<UserProvider>(context, listen: false);
+                    user.resetVillageTutorial();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Village Tutorial activated! Tap the PLAY button to start.'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFF5D4037),
+                        duration: const Duration(seconds: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.explore_rounded, color: Color(0xFF81C784), size: 19),
+                  label: Text(
+                    'REPLAY VILLAGE TUTORIAL',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                      color: const Color(0xFFDCEDC8),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF7CB342), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // 3. Slides option
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
