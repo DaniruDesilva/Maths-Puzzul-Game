@@ -435,7 +435,7 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
               right: 0,
               child: Consumer<UserProvider>(
               builder: (context, user, _) {
-                final showVillageTutorial = !user.hasCompletedVillageTutorial;
+                final showVillageTutorial = user.showVillageTutorial;
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -569,14 +569,14 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
             ),
           ),
 
-          // Cottage Building Tutorial Overlay (guides player to build their first Cottage with bonus coins)
+          // Cottage Building Tutorial Overlay (guides player to build their first Cottage with starter coins)
           Consumer<UserProvider>(
             builder: (context, user, _) {
               if (!user.showCottageTutorial) return const SizedBox.shrink();
               final screenSize = MediaQuery.of(context).size;
               final cottagePos = _game.getBuildingScreenPosition('cottage');
-              final double targetX = cottagePos?.x ?? (screenSize.width * 0.30);
-              final double targetY = cottagePos?.y ?? (screenSize.height * 0.35);
+              final double targetX = cottagePos?.x ?? (screenSize.width * 0.28);
+              final double targetY = cottagePos?.y ?? (screenSize.height * 0.36);
 
               final cottageDef = widget.village.buildings.firstWhere(
                 (b) => b.id == 'cottage',
@@ -586,28 +586,32 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Floating Callout Speech Bubble near the Cottage plot
+                  // Clean, centered top speech bubble callout
                   Positioned(
-                    left: (targetX - 120).clamp(16.0, screenSize.width - 340),
-                    top: (targetY - 105).clamp(90.0, screenSize.height - 250),
-                    child: TutorialSpeechBubble(
-                      title: 'Build Your First Cottage! 🏡',
-                      message: 'You earned coins! Tap the plot to restore the cozy cottage for Bunny!',
-                      icon: Icons.home_rounded,
-                      onSkip: () => user.completeCottageTutorial(),
-                    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.15, end: 0),
+                    top: MediaQuery.of(context).padding.top + 80,
+                    left: 20,
+                    right: 20,
+                    child: Center(
+                      child: TutorialSpeechBubble(
+                        title: 'Build Your First Cottage! 🏡',
+                        message: 'Tap the plot below to restore the cozy cottage for Bunny!',
+                        icon: Icons.home_rounded,
+                        onSkip: () => user.completeCottageTutorial(),
+                      ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.15, end: 0),
+                    ),
                   ),
 
-                  // Cartoon Hand Pointer tapping directly on the cottage signboard/plot
+                  // Cartoon Hand Pointer tapping directly onto the cottage plot signboard
                   Positioned(
-                    left: targetX - 35,
-                    top: targetY - 45,
-                    child: CartoonHandPointer(
-                      direction: HandPointerDirection.tapping,
-                      size: 58,
-                      label: 'Tap to build! 🪙',
+                    left: targetX - 28,
+                    top: targetY - 50,
+                    child: GestureDetector(
                       onTap: () => _openBuildingSheet(cottageDef),
-                      onDismiss: () => user.completeCottageTutorial(),
+                      child: const CartoonHandPointer(
+                        direction: HandPointerDirection.pointingDown,
+                        size: 56,
+                        showRipple: true,
+                      ),
                     ).animate().fadeIn(duration: 350.ms),
                   ),
                 ],

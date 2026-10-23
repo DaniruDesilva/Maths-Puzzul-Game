@@ -116,11 +116,17 @@ class UserProvider extends ChangeNotifier {
   bool hasSeenHintTooltip = false;
   bool hasSeenMistakeTooltip = false;
 
-  /// True when the player has earned enough coins (>= 100) and hasn't built the first cottage yet
+  /// Step 1 of onboarding: When cottage is unbuilt and cottage tutorial is not yet completed.
+  /// New users start with 100 starter coins, so restoring the cottage is their very first task.
   bool get showCottageTutorial =>
       !hasCompletedCottageTutorial &&
-      (levelsCompleted >= 1 || coins >= 100) &&
       (villageBuildings['cottage'] ?? 0) == 0;
+
+  /// Step 2 of onboarding: Only shows AFTER the cottage is built (or cottage tutorial completed),
+  /// ensuring instructions appear one after another sequentially.
+  bool get showVillageTutorial =>
+      !showCottageTutorial &&
+      !hasCompletedVillageTutorial;
 
   SharedPreferences? _prefs;
 

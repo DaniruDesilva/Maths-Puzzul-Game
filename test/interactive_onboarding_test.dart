@@ -225,18 +225,21 @@ void main() {
       expect(user.hasCompletedCottageTutorial, isFalse);
     });
 
-    test('showCottageTutorial activates when user has completed level 1 and cottage is unbuilt', () {
+    test('showCottageTutorial and showVillageTutorial are sequential', () {
       final user = UserProvider();
-      expect(user.showCottageTutorial, isFalse);
-
-      // Simulate completing level 1 with bonus coins
-      user.levelsCompleted = 1;
-      user.coins = 180;
+      // Step 1: New user with unbuilt cottage -> Cottage tutorial is active, Play tutorial is inactive
       expect(user.showCottageTutorial, isTrue);
+      expect(user.showVillageTutorial, isFalse);
 
-      // Building cottage deactivates tutorial
+      // Building cottage completes step 1 and activates step 2 (Village Play tutorial)
+      user.completeCottageTutorial();
       user.villageBuildings['cottage'] = 1;
       expect(user.showCottageTutorial, isFalse);
+      expect(user.showVillageTutorial, isTrue);
+
+      // Completing village play tutorial completes step 2
+      user.completeVillageTutorial();
+      expect(user.showVillageTutorial, isFalse);
     });
 
     test('completeInteractiveOnboarding updates flags', () async {

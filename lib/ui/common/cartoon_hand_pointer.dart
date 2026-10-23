@@ -110,18 +110,17 @@ class _CartoonHandPointerState extends State<CartoonHandPointer>
 
           switch (widget.direction) {
             case HandPointerDirection.tapping:
-              // Natural right-hand touchscreen tap: finger points top-left (-30°), arm extends down-right
+              // Natural right-hand touchscreen tap: finger points top-left (~-30°), arm extends down-right
               angle = -math.pi * 0.16; // ~ -29°
               // Hover pulled back along arm axis (down and right)
               hoverDx = 10.0 * (1.0 - pressFactor);
               hoverDy = 10.0 * (1.0 - pressFactor);
               break;
             case HandPointerDirection.pointingDown:
-              // Finger points straight down (180°), arm extends UP (-Y)
-              angle = math.pi;
-              // Hover pulled back upwards (-Y)
-              hoverDx = 0.0;
-              hoverDy = -12.0 * (1.0 - pressFactor);
+              // Angled downward tap: finger points down-left, arm extends up-right
+              angle = math.pi * 0.78;
+              hoverDx = 8.0 * (1.0 - pressFactor);
+              hoverDy = -10.0 * (1.0 - pressFactor);
               break;
             case HandPointerDirection.pointingUp:
               // Finger points straight up (0°), arm extends DOWN (+Y)

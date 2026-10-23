@@ -22,6 +22,7 @@ import 'game/hint_bubble.dart';
 import 'game/interactive_onboarding_overlay.dart';
 import '../services/onboarding_service.dart';
 import 'tutorial_screen.dart';
+import '../app_router.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -824,10 +825,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 // Control Buttons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 22),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        flex: 2,
+                      // Primary Button: NEXT LEVEL / CLAIM REWARD / FINISH
+                      SizedBox(
+                        width: double.infinity,
                         child: _buildControlButton(
                           icon: Icons.play_arrow_rounded,
                           label: provider.isCustomPuzzle
@@ -867,44 +869,64 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           },
                         ).animate(delay: 1000.ms).scale(curve: Curves.elasticOut, duration: 600.ms),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 1,
-                        child: _buildControlButton(
-                          icon: Icons.share_rounded,
-                          label: 'SHARE',
-                          color: const Color(0xFF0F766E),
-                          onTap: () async {
-                            if (_isSharing) return;
-                            setState(() => _isSharing = true);
-                            try {
-                              RenderRepaintBoundary boundary =
-                                  _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                              import_ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-                              var byteData = await image.toByteData(format: import_ui.ImageByteFormat.png);
-                              if (byteData != null) {
-                                final directory = await getTemporaryDirectory();
-                                final file = File('${directory.path}/score_share.png');
-                                await file.writeAsBytes(byteData.buffer.asUint8List());
+                      const SizedBox(height: 10),
+                      // Secondary Action Row: BACK TO VILLAGE and SHARE
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildControlButton(
+                              icon: Icons.cottage_rounded,
+                              label: 'VILLAGE',
+                              color: const Color(0xFF5D4037),
+                              onTap: () {
+                                SoundService.playClick();
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                } else {
+                                  Navigator.pushReplacementNamed(context, AppRouter.village);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildControlButton(
+                              icon: Icons.share_rounded,
+                              label: 'SHARE',
+                              color: const Color(0xFF0F766E),
+                              onTap: () async {
+                                if (_isSharing) return;
+                                setState(() => _isSharing = true);
+                                try {
+                                  RenderRepaintBoundary boundary =
+                                      _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                  import_ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+                                  var byteData = await image.toByteData(format: import_ui.ImageByteFormat.png);
+                                  if (byteData != null) {
+                                    final directory = await getTemporaryDirectory();
+                                    final file = File('${directory.path}/score_share.png');
+                                    await file.writeAsBytes(byteData.buffer.asUint8List());
 
-                                String title = provider.isDailyChallenge
-                                    ? 'Number Haven Daily Challenge'
-                                    : (provider.isCustomPuzzle
-                                        ? 'Custom Puzzle'
-                                        : 'Level ${provider.currentLevel}');
-                                await SharePlus.instance.share(ShareParams(
-                                  files: [XFile(file.path)],
-                                  text:
-                                      'I just solved $title with $stars/3 stars in Number Haven: Cozy Math Village!',
-                                ));
-                              }
-                            } catch (e) {
-                              debugPrint('Error sharing image: $e');
-                            } finally {
-                              if (mounted) setState(() => _isSharing = false);
-                            }
-                          },
-                        ).animate(delay: 1100.ms).scale(curve: Curves.elasticOut, duration: 600.ms),
+                                    String title = provider.isDailyChallenge
+                                        ? 'Number Haven Daily Challenge'
+                                        : (provider.isCustomPuzzle
+                                            ? 'Custom Puzzle'
+                                            : 'Level ${provider.currentLevel}');
+                                    await SharePlus.instance.share(ShareParams(
+                                      files: [XFile(file.path)],
+                                      text:
+                                          'I just solved $title with $stars/3 stars in Number Haven: Cozy Math Village!',
+                                    ));
+                                  }
+                                } catch (e) {
+                                  debugPrint('Error sharing image: $e');
+                                } finally {
+                                  if (mounted) setState(() => _isSharing = false);
+                                }
+                              },
+                            ).animate(delay: 1100.ms).scale(curve: Curves.elasticOut, duration: 600.ms),
+                          ),
+                        ],
                       ),
                     ],
                   ),

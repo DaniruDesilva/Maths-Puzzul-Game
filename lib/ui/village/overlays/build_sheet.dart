@@ -183,70 +183,78 @@ class BuildSheet extends StatelessWidget {
                     ),
                   ),
                 ] else if (!isMaxed) ...[
-                  if (canAfford) ...[
-                    if (isCottageTutorial) ...[
-                      const Center(
-                        child: CartoonHandPointer(
-                          direction: HandPointerDirection.pointingDown,
-                          size: 48,
-                          label: 'Tap to build! 🏡',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          user.spendCoins(cost);
-                          user.upgradeBuilding(buildingDef.id);
-                          if (isCottageTutorial) {
-                            user.completeCottageTutorial();
-                          }
-                          Navigator.pop(context); // Close sheet
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                  if (canAfford)
+                    Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              user.spendCoins(cost);
+                              user.upgradeBuilding(buildingDef.id);
+                              if (isCottageTutorial) {
+                                user.completeCottageTutorial();
+                              }
+                              Navigator.pop(context); // Close sheet
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4CAF50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                              elevation: isCottageTutorial ? 8 : 4,
+                              side: isCottageTutorial
+                                  ? const BorderSide(color: Color(0xFFFFD54F), width: 3.5)
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  currentStage == 0 ? 'BUILD FOR ' : 'UPGRADE FOR ',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.monetization_on_rounded,
+                                  color: Color(0xFFF2C94C),
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '$cost',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          elevation: 4,
-                          side: isCottageTutorial
-                              ? const BorderSide(color: Color(0xFFFFD54F), width: 2.5)
-                              : null,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              currentStage == 0 ? 'BUILD FOR ' : 'UPGRADE FOR ',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 1,
+                        // Cartoon hand tapping directly onto the green build button
+                        if (isCottageTutorial)
+                          const Positioned(
+                            top: -36,
+                            right: 48,
+                            child: IgnorePointer(
+                              child: CartoonHandPointer(
+                                direction: HandPointerDirection.tapping,
+                                size: 54,
+                                showRipple: true,
                               ),
                             ),
-                            const Icon(
-                              Icons.monetization_on_rounded,
-                              color: Color(0xFFF2C94C),
-                              size: 24,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '$cost',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ]
+                          ),
+                      ],
+                    )
                   else
                     Row(
                       children: [
