@@ -31,6 +31,43 @@ class CartoonHandPointer extends StatefulWidget {
     this.onDismiss,
   });
 
+  /// Calculates the exact pixel offset of the pointing index fingertip relative to the
+  /// top-left of the CartoonHandPointer widget (when label is null).
+  /// Callers can position the widget so its fingertip touches a target point:
+  /// `left: targetX - tipOffset.dx, top: targetY - tipOffset.dy`
+  static Offset getFingertipOffset({
+    required HandPointerDirection direction,
+    required double size,
+  }) {
+    // In base 100x100 coordinates, glove center is (50, 50) and index fingertip is at (48, 6).
+    final baseTipDx = -0.02 * size;
+    final baseTipDy = -0.44 * size;
+
+    double angle = 0.0;
+    switch (direction) {
+      case HandPointerDirection.tapping:
+        angle = -math.pi * 0.16; // ~ -29° (pointing up-left)
+        break;
+      case HandPointerDirection.pointingDown:
+        angle = math.pi; // 180° (pointing straight down)
+        break;
+      case HandPointerDirection.pointingUp:
+        angle = 0.0;
+        break;
+      case HandPointerDirection.pointingLeft:
+        angle = -math.pi * 0.5;
+        break;
+      case HandPointerDirection.pointingRight:
+        angle = math.pi * 0.5;
+        break;
+    }
+
+    final tipDx = baseTipDx * math.cos(angle) - baseTipDy * math.sin(angle);
+    final tipDy = baseTipDx * math.sin(angle) + baseTipDy * math.cos(angle);
+    final center = size * 0.75;
+    return Offset(center + tipDx, center + tipDy);
+  }
+
   @override
   State<CartoonHandPointer> createState() => _CartoonHandPointerState();
 }
@@ -117,10 +154,11 @@ class _CartoonHandPointerState extends State<CartoonHandPointer>
               hoverDy = 10.0 * (1.0 - pressFactor);
               break;
             case HandPointerDirection.pointingDown:
-              // Angled downward tap: finger points down-left, arm extends up-right
-              angle = math.pi * 0.78;
-              hoverDx = 8.0 * (1.0 - pressFactor);
-              hoverDy = -10.0 * (1.0 - pressFactor);
+              // Finger points straight down (180°), arm extends UP (-Y)
+              angle = math.pi;
+              // Hover pulled back upwards (-Y)
+              hoverDx = 0.0;
+              hoverDy = -12.0 * (1.0 - pressFactor);
               break;
             case HandPointerDirection.pointingUp:
               // Finger points straight up (0°), arm extends DOWN (+Y)
@@ -143,6 +181,15 @@ class _CartoonHandPointerState extends State<CartoonHandPointer>
 
           // Elastic compression squish on tap impact
           final double squish = 1.0 - (0.07 * pressFactor);
+
+          // Calculate precise contact point of the fingertip inside the 1.5x stack
+          final baseTipDx = -0.02 * widget.size;
+          final baseTipDy = -0.44 * widget.size;
+          final tipDx = baseTipDx * math.cos(angle) - baseTipDy * math.sin(angle);
+          final tipDy = baseTipDx * math.sin(angle) + baseTipDy * math.cos(angle);
+          final center = widget.size * 0.75;
+          final contactX = center + tipDx;
+          final contactY = center + tipDy;
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -206,8 +253,8 @@ class _CartoonHandPointerState extends State<CartoonHandPointer>
                     // Concentric touch shockwave ripples emitted exactly from contact point
                     if (widget.showRipple && _controller.value >= 0.35)
                       Positioned(
-                        left: widget.size * 0.75 - 28,
-                        top: widget.size * 0.75 - 28,
+                        left: contactX - 28,
+                        top: contactY - 28,
                         child: CustomPaint(
                           size: const Size(56, 56),
                           painter: _TouchRipplePainter(

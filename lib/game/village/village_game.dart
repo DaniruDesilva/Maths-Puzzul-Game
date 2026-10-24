@@ -159,11 +159,14 @@ class VillageGame extends FlameGame with PanDetector {
     try {
       for (final def in village.buildings) {
         if (def.id == buildingId) {
-          final signX = def.signboardPos?.dx ?? (def.spriteSize.width * 0.2);
-          final signY = def.signboardPos?.dy ?? (def.spriteSize.height * 0.7);
-          // Building anchor is bottomCenter: top-left is (plot.dx - width/2, plot.dy - height)
-          final worldX = def.plot.dx - def.spriteSize.width / 2 + signX;
-          final worldY = def.plot.dy - def.spriteSize.height + signY;
+          final isUnbuilt = (userProvider.villageBuildings[buildingId] ?? 0) == 0;
+          // Unbuilt plots center their signboard on the dirt patch at (plot.dx, plot.dy - 40)
+          final worldX = isUnbuilt
+              ? def.plot.dx
+              : (def.plot.dx - def.spriteSize.width / 2 + (def.signboardPos?.dx ?? (def.spriteSize.width * 0.5)));
+          final worldY = isUnbuilt
+              ? (def.plot.dy - 40)
+              : (def.plot.dy - def.spriteSize.height + (def.signboardPos?.dy ?? (def.spriteSize.height - 20)));
           final worldPos = Vector2(worldX, worldY);
 
           final delta = worldPos - camera.viewfinder.position;

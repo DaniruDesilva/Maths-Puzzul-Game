@@ -602,17 +602,27 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                   ),
 
                   // Cartoon Hand Pointer tapping directly onto the cottage plot signboard
-                  Positioned(
-                    left: targetX - 28,
-                    top: targetY - 50,
-                    child: GestureDetector(
-                      onTap: () => _openBuildingSheet(cottageDef),
-                      child: const CartoonHandPointer(
-                        direction: HandPointerDirection.pointingDown,
-                        size: 56,
-                        showRipple: true,
-                      ),
-                    ).animate().fadeIn(duration: 350.ms),
+                  Builder(
+                    builder: (context) {
+                      const handSize = 58.0;
+                      final tipOffset = CartoonHandPointer.getFingertipOffset(
+                        direction: HandPointerDirection.tapping,
+                        size: handSize,
+                      );
+
+                      return Positioned(
+                        left: targetX - tipOffset.dx,
+                        top: targetY - tipOffset.dy,
+                        child: GestureDetector(
+                          onTap: () => _openBuildingSheet(cottageDef),
+                          child: const CartoonHandPointer(
+                            direction: HandPointerDirection.tapping,
+                            size: handSize,
+                            showRipple: true,
+                          ),
+                        ).animate().fadeIn(duration: 350.ms),
+                      );
+                    },
                   ),
                 ],
               );
