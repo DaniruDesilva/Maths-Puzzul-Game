@@ -240,14 +240,13 @@ class BuildSheet extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Cartoon hand tapping directly onto the green build button
+                        // Cartoon hand tapping directly into the green build button
                         if (isCottageTutorial)
                           const Positioned(
-                            top: -36,
-                            right: 48,
+                            top: -44,
                             child: IgnorePointer(
                               child: CartoonHandPointer(
-                                direction: HandPointerDirection.tapping,
+                                direction: HandPointerDirection.pointingDown,
                                 size: 54,
                                 showRipple: true,
                               ),
