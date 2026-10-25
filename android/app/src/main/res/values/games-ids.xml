@@ -2,5 +2,17 @@
 <resources>
     <!-- Google Play Games Services Configuration -->
     <!-- Replace this placeholder with your numeric Project ID from Google Play Console (Grow > Play Games Services > Setup) -->
-    <string name="game_services_project_id">000000000000</string>
+    <string name="game_services_project_id">87225459043</string>
+    <string name="leaderboard_highest_brain_power">CgkI48Kr-MQCEAIQAQ</string>
+    <string name="leaderboard_levels_mastered">CgkI48Kr-MQCEAIQAg</string>
+    <string name="leaderboard_longest_daily_streak">CgkI48Kr-MQCEAIQAw</string>
+    <string name="achievement_math_apprentice">CgkI48Kr-MQCEAIQBA</string>
+    <string name="achievement_arithmetic_wizard">CgkI48Kr-MQCEAIQBQ</string>
+    <string name="achievement_crossmath_legend">CgkI48Kr-MQCEAIQBg</string>
+    <string name="achievement_beginner">CgkI48Kr-MQCEAIQBw</string>
+    <string name="achievement_explorer">CgkI48Kr-MQCEAIQCA</string>
+    <string name="achievement_conqueror">CgkI48Kr-MQCEAIQCQ</string>
+    <string name="achievement_need_a_hand">CgkI48Kr-MQCEAIQCg</string>
+    <string name="achievement_warming_up">CgkI48Kr-MQCEAIQCw</string>
+    <string name="achievement_on_fire">CgkI48Kr-MQCEAIQDA</string>
 </resources>

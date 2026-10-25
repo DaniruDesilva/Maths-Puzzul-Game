@@ -11,22 +11,22 @@ export 'package:games_services/games_services.dart';
 /// Handles automatic silent sign-in, leaderboards, achievement unlocking,
 /// cloud saves, and UI presentation with robust offline & test fallback.
 class GameServicesHelper {
-  // Leaderboard IDs (configurable / matched with Play Console)
-  static const String leaderboardBrainSize = 'leaderboard_brain_power';
-  static const String leaderboardLevelsCompleted = 'leaderboard_levels_completed';
-  static const String leaderboardDailyStreak = 'leaderboard_daily_streak';
+  // Leaderboard IDs (configured from Google Play Console)
+  static const String leaderboardBrainSize = 'CgkI48Kr-MQCEAIQAQ';
+  static const String leaderboardLevelsCompleted = 'CgkI48Kr-MQCEAIQAg';
+  static const String leaderboardDailyStreak = 'CgkI48Kr-MQCEAIQAw';
 
   // In-Game Achievement ID to Play Games Achievement ID mapping
   static const Map<String, String> achievementIdMap = {
-    'words_50': 'achievement_math_apprentice',
-    'words_250': 'achievement_arithmetic_wizard',
-    'words_1000': 'achievement_crossmath_legend',
-    'levels_10': 'achievement_beginner',
-    'levels_50': 'achievement_explorer',
-    'levels_150': 'achievement_conqueror',
-    'hints_20': 'achievement_need_a_hand',
-    'streak_3': 'achievement_warming_up',
-    'streak_7': 'achievement_on_fire',
+    'words_50': 'CgkI48Kr-MQCEAIQBA',
+    'words_250': 'CgkI48Kr-MQCEAIQBQ',
+    'words_1000': 'CgkI48Kr-MQCEAIQBg',
+    'levels_10': 'CgkI48Kr-MQCEAIQBw',
+    'levels_50': 'CgkI48Kr-MQCEAIQCA',
+    'levels_150': 'CgkI48Kr-MQCEAIQCQ',
+    'hints_20': 'CgkI48Kr-MQCEAIQCg',
+    'streak_3': 'CgkI48Kr-MQCEAIQCw',
+    'streak_7': 'CgkI48Kr-MQCEAIQDA',
   };
 
   static bool _isSignedIn = false;
