@@ -100,28 +100,52 @@ class _NumberHavenAppState extends State<NumberHavenApp> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Number Haven: Cozy Math Village',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF1F5DD), // Warmer, earthy off-white
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF5D4037), // Rich wood brown
-          primary: const Color(0xFF5D4037),
-          secondary: const Color(0xFF7CB342), // Bright meadow green
-          brightness: Brightness.light,
-        ),
-        fontFamily: GoogleFonts.baloo2().fontFamily,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Color(0xFF4A4A4A)),
-          bodyMedium: TextStyle(color: Color(0xFF4A4A4A)),
-          titleLarge: TextStyle(color: Color(0xFF2C3E35), fontWeight: FontWeight.bold),
-        ),
-      ),
-      initialRoute: AppRouter.splash,
-      onGenerateRoute: AppRouter.generateRoute,
+    return Consumer<UserProvider>(
+      builder: (context, user, _) {
+        final isDark = user.darkModeEnabled;
+        return MaterialApp(
+          title: 'Number Haven: Cozy Math Village',
+          debugShowCheckedModeBanner: false,
+          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: const Color(0xFFF1F5DD), // Warmer, earthy off-white
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF5D4037), // Rich wood brown
+              primary: const Color(0xFF5D4037),
+              secondary: const Color(0xFF7CB342), // Bright meadow green
+              brightness: Brightness.light,
+            ),
+            fontFamily: GoogleFonts.baloo2().fontFamily,
+            textTheme: const TextTheme(
+              bodyLarge: TextStyle(color: Color(0xFF4A4A4A)),
+              bodyMedium: TextStyle(color: Color(0xFF4A4A4A)),
+              titleLarge: TextStyle(color: Color(0xFF2C3E35), fontWeight: FontWeight.bold),
+            ),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: const Color(0xFF14110E), // Cozy dark night
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF8D6E63),
+              primary: const Color(0xFFD7CCC8),
+              secondary: const Color(0xFF81C784),
+              brightness: Brightness.dark,
+              surface: const Color(0xFF1E1813),
+            ),
+            fontFamily: GoogleFonts.baloo2().fontFamily,
+            textTheme: const TextTheme(
+              bodyLarge: TextStyle(color: Color(0xFFECEFF1)),
+              bodyMedium: TextStyle(color: Color(0xFFCFD8DC)),
+              titleLarge: TextStyle(color: Color(0xFFFFF7ED), fontWeight: FontWeight.bold),
+            ),
+          ),
+          initialRoute: AppRouter.splash,
+          onGenerateRoute: AppRouter.generateRoute,
+        );
+      },
     );
   }
 }

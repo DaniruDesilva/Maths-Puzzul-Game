@@ -43,6 +43,7 @@ class UserProvider extends ChangeNotifier {
   bool musicEnabled = true;
   bool hapticsEnabled = true;
   bool notificationsEnabled = true;
+  bool darkModeEnabled = false;
   
   bool isLoading = true;
   final Completer<void> _initCompleter = Completer<void>();
@@ -187,6 +188,7 @@ class UserProvider extends ChangeNotifier {
     musicEnabled = _prefs!.getBool('setting_music') ?? true;
     hapticsEnabled = _prefs!.getBool('setting_haptics') ?? true;
     notificationsEnabled = _prefs!.getBool('setting_notifications') ?? true;
+    darkModeEnabled = _prefs!.getBool('setting_dark_mode') ?? false;
     
     // Onboarding & Tooltip preferences
     hasCompletedVillageTutorial = _prefs!.getBool('has_completed_village_tutorial') ?? false;
@@ -736,6 +738,14 @@ class UserProvider extends ChangeNotifier {
       await NotificationService.showConfirmationNotification();
     } else {
       await NotificationService.cancelAll();
+    }
+    notifyListeners();
+  }
+
+  void toggleDarkMode() {
+    darkModeEnabled = !darkModeEnabled;
+    if (_prefs != null) {
+      _prefs!.setBool('setting_dark_mode', darkModeEnabled);
     }
     notifyListeners();
   }

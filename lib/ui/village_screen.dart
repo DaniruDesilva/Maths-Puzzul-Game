@@ -96,31 +96,44 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFD9E8FE),
-      body: Stack(
-        children: [
-          // 0. Base Island Background (prevents any blank/white flashes while Flame initializes)
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/village/meadow/island_bg.webp',
-              fit: BoxFit.cover,
-            ),
-          ),
+    return Consumer<UserProvider>(
+      builder: (context, user, _) {
+        final isDark = user.darkModeEnabled;
+        return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFD9E8FE),
+          body: Stack(
+            children: [
+              // 0. Base Island Background (prevents any blank/white flashes while Flame initializes)
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/village/meadow/island_bg.webp',
+                  fit: BoxFit.cover,
+                ),
+              ),
 
-          // The Flame Game Canvas (The Village)
-          GameWidget(
-            game: _game,
-            loadingBuilder: (context) => Image.asset(
-              'assets/images/village/meadow/island_bg.webp',
-              fit: BoxFit.cover,
-            ),
-          ),
-          
-          // Subtle top/bottom gradients to ensure text is readable over any village area
-          IgnorePointer(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // The Flame Game Canvas (The Village)
+              GameWidget(
+                game: _game,
+                loadingBuilder: (context) => Image.asset(
+                  'assets/images/village/meadow/island_bg.webp',
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+              // Cozy Nighttime Twilight Overlay in Dark Mode
+              if (isDark)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Container(
+                      color: const Color(0xFF0A0F1D).withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              
+              // Subtle top/bottom gradients to ensure text is readable over any village area
+              IgnorePointer(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   height: 140,
@@ -167,68 +180,64 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD7CCC8),
+                              color: isDark ? const Color(0xFF241A14) : const Color(0xFFD7CCC8),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF5D4037), width: 2.5),
+                              border: Border.all(color: isDark ? const Color(0xFF8D6E63) : const Color(0xFF5D4037), width: 2.5),
                               boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
                             ),
-                            child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF5D4037), size: 22),
+                            child: Icon(Icons.arrow_back_rounded, color: isDark ? const Color(0xFFFFD54F) : const Color(0xFF5D4037), size: 22),
                           ),
                         )
                       else
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Consumer<UserProvider>(
-                              builder: (context, user, child) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFDF5E6),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
-                                    boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF241A14) : const Color(0xFFFDF5E6),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: isDark ? const Color(0xFF6D4C41) : const Color(0xFF8B5A2B), width: 2.5),
+                                boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(7),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF7CB342),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.psychology, color: Colors.white, size: 22),
+                                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.1, duration: 1.seconds),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(7),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF7CB342),
-                                          shape: BoxShape.circle,
+                                      Text(
+                                        user.isLoading ? '...' : '${user.brainSize}cc',
+                                        style: TextStyle(
+                                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                          color: isDark ? const Color(0xFFFFE0B2) : const Color(0xFF5D4037),
+                                          fontSize: 20,
+                                          height: 1.0,
                                         ),
-                                        child: const Icon(Icons.psychology, color: Colors.white, size: 22),
-                                      ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.1, duration: 1.seconds),
-                                      const SizedBox(width: 10),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            user.isLoading ? '...' : '${user.brainSize}cc',
-                                            style: TextStyle(
-                                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                              color: const Color(0xFF5D4037),
-                                              fontSize: 20,
-                                              height: 1.0,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            user.isLoading ? '...' : 'Level ${user.currentLevel}',
-                                            style: TextStyle(
-                                              fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                              color: const Color(0xFF8B5A2B),
-                                              fontSize: 13,
-                                              letterSpacing: 1,
-                                            ),
-                                          ),
-                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        user.isLoading ? '...' : 'Level ${user.currentLevel}',
+                                        style: TextStyle(
+                                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                          color: isDark ? const Color(0xFFFFB74D) : const Color(0xFF8B5A2B),
+                                          fontSize: 13,
+                                          letterSpacing: 1,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                );
-                              }
+                                ],
+                              ),
                             ),
                             
                             // Quick Action Buttons Row (Settings, Fortune Wheel, Acorn Vault)
@@ -345,81 +354,79 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                         ),
                       
                       // Top Right: Currency & Helpers (Coins ONLY if !isRoot)
-                      Consumer<UserProvider>(
-                        builder: (context, user, child) {
-                          if (!widget.isRoot) {
-                            return _buildTopBadge(
-                              Icons.monetization_on_rounded,
-                              '${user.coins}',
-                              const Color(0xFFFFD54F),
-                              showAddIcon: true,
-                              onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                children: [
-                                  // Create Button
-                                  GestureDetector(
-                                    onTap: () => _navigate(AppRouter.customPuzzle),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF5D4037),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
-                                        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                                      ),
-                                      child: const Icon(Icons.brush_rounded, color: Color(0xFFFFD54F), size: 20),
+                      if (!widget.isRoot)
+                        _buildTopBadge(
+                          Icons.monetization_on_rounded,
+                          '${user.coins}',
+                          const Color(0xFFFFD54F),
+                          showAddIcon: true,
+                          onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
+                          isDark: isDark,
+                        )
+                      else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              children: [
+                                // Create Button
+                                GestureDetector(
+                                  onTap: () => _navigate(AppRouter.customPuzzle),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5D4037),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
                                     ),
+                                    child: const Icon(Icons.brush_rounded, color: Color(0xFFFFD54F), size: 20),
                                   ),
-                                  const SizedBox(height: 8),
-                                  // Achievements Button
-                                  GestureDetector(
-                                    onTap: () => _navigate(AppRouter.achievements),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF5D4037),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
-                                        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                                      ),
-                                      child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F), size: 20),
+                                ),
+                                const SizedBox(height: 8),
+                                // Achievements Button
+                                GestureDetector(
+                                  onTap: () => _navigate(AppRouter.achievements),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF5D4037),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
                                     ),
+                                    child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F), size: 20),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  // Store / Hints Button
-                                  _buildTopBadge(
-                                    Icons.lightbulb_rounded,
-                                    user.isLoading ? '...' : '${user.hintsRegular}',
-                                    const Color(0xFFF2C94C),
-                                    showAddIcon: true,
-                                    onTap: () => _navigate(AppRouter.store, arguments: 'hints'),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Coins Badge - Now directly opens Store on Coins tab!
-                                  _buildTopBadge(
-                                    Icons.monetization_on_rounded,
-                                    user.isLoading ? '...' : '${user.coins}',
-                                    const Color(0xFFFFD54F),
-                                    showAddIcon: true,
-                                    onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          );
-                        }
-                      ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                // Store / Hints Button
+                                _buildTopBadge(
+                                  Icons.lightbulb_rounded,
+                                  user.isLoading ? '...' : '${user.hintsRegular}',
+                                  const Color(0xFFF2C94C),
+                                  showAddIcon: true,
+                                  onTap: () => _navigate(AppRouter.store, arguments: 'hints'),
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 8),
+                                // Coins Badge - Now directly opens Store on Coins tab!
+                                _buildTopBadge(
+                                  Icons.monetization_on_rounded,
+                                  user.isLoading ? '...' : '${user.coins}',
+                                  const Color(0xFFFFD54F),
+                                  showAddIcon: true,
+                                  onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
+                                  isDark: isDark,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -631,6 +638,8 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildTopBadge(
@@ -639,13 +648,14 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
     Color iconColor, {
     bool showAddIcon = false,
     VoidCallback? onTap,
+    bool isDark = false,
   }) {
     Widget badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF5E6),
+        color: isDark ? const Color(0xFF241A14) : const Color(0xFFFDF5E6),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF8B5A2B), width: 2.5),
+        border: Border.all(color: isDark ? const Color(0xFF6D4C41) : const Color(0xFF8B5A2B), width: 2.5),
         boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
       ),
       child: Row(
@@ -657,7 +667,7 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
             value,
             style: TextStyle(
               fontFamily: GoogleFonts.lilitaOne().fontFamily,
-              color: const Color(0xFF5D4037), 
+              color: isDark ? const Color(0xFFFFE0B2) : const Color(0xFF5D4037), 
               fontSize: 16,
             ),
           ),
@@ -737,18 +747,19 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
       builder: (dialogCtx) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 390, maxHeight: 660),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFDF5E6), // Parchment
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFF8B5A2B), width: 4),
-            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 10))],
-          ),
-          child: Consumer<UserProvider>(
-            builder: (context, user, child) {
-              return SingleChildScrollView(
+        child: Consumer<UserProvider>(
+          builder: (context, user, child) {
+            final isDark = user.darkModeEnabled;
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 390, maxHeight: 660),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF241A14) : const Color(0xFFFDF5E6), // Parchment / Dark wood
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: isDark ? const Color(0xFF6D4C41) : const Color(0xFF8B5A2B), width: 4),
+                boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 10))],
+              ),
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -757,19 +768,21 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                       style: TextStyle(
                         fontFamily: GoogleFonts.lilitaOne().fontFamily,
                         fontSize: 26,
-                        color: const Color(0xFF5D4037),
+                        color: isDark ? const Color(0xFFFFE0B2) : const Color(0xFF5D4037),
                         letterSpacing: 2,
                       ),
                     ),
                     const SizedBox(height: 14),
                     
-                    _buildSettingRow('Sound Effects', Icons.volume_up_rounded, user.soundEnabled, user.toggleSound),
+                    _buildSettingRow('Sound Effects', Icons.volume_up_rounded, user.soundEnabled, user.toggleSound, isDark: isDark),
                     const SizedBox(height: 8),
-                    _buildSettingRow('Music', Icons.music_note_rounded, user.musicEnabled, user.toggleMusic),
+                    _buildSettingRow('Music', Icons.music_note_rounded, user.musicEnabled, user.toggleMusic, isDark: isDark),
                     const SizedBox(height: 8),
-                    _buildSettingRow('Haptics', Icons.vibration_rounded, user.hapticsEnabled, user.toggleHaptics),
+                    _buildSettingRow('Haptics', Icons.vibration_rounded, user.hapticsEnabled, user.toggleHaptics, isDark: isDark),
                     const SizedBox(height: 8),
-                    _buildSettingRow('Daily Reminder', Icons.notifications_active_rounded, user.notificationsEnabled, user.toggleNotifications),
+                    _buildSettingRow('Daily Reminder', Icons.notifications_active_rounded, user.notificationsEnabled, user.toggleNotifications, isDark: isDark),
+                    const SizedBox(height: 8),
+                    _buildSettingRow('Dark Mode 🌙', Icons.dark_mode_rounded, user.darkModeEnabled, user.toggleDarkMode, isDark: isDark),
                     
                     const SizedBox(height: 14),
 
@@ -910,10 +923,10 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ).animate().scaleXY(begin: 0.8, end: 1.0, duration: 300.ms, curve: Curves.easeOutBack),
+              ),
+            ).animate().scaleXY(begin: 0.8, end: 1.0, duration: 300.ms, curve: Curves.easeOutBack);
+          },
+        ),
       ),
     );
     if (mounted) {
@@ -1096,33 +1109,33 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
     }
   }
 
-  Widget _buildSettingRow(String title, IconData icon, bool value, VoidCallback onTap) {
+  Widget _buildSettingRow(String title, IconData icon, bool value, VoidCallback onTap, {bool isDark = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1611) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE8E3D2), width: 1.5),
+          border: Border.all(color: isDark ? const Color(0xFF4E342E) : const Color(0xFFE8E3D2), width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF8B5A2B), size: 24),
+            Icon(icon, color: isDark ? const Color(0xFFFFB74D) : const Color(0xFF8B5A2B), size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
                   fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                  color: const Color(0xFF5D4037),
+                  color: isDark ? const Color(0xFFECEFF1) : const Color(0xFF5D4037),
                   fontSize: 16,
                 ),
               ),
             ),
             Icon(
               value ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-              color: value ? const Color(0xFF7CB342) : Colors.grey,
+              color: value ? const Color(0xFF7CB342) : (isDark ? Colors.grey.shade600 : Colors.grey),
               size: 38,
             ),
           ],

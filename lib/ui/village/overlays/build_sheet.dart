@@ -29,14 +29,16 @@ class BuildSheet extends StatelessWidget {
           perkText = buildingDef.perks[currentStage];
         }
 
+        final isDark = user.darkModeEnabled;
+
         return Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Color(0xFFF9F7F1),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            boxShadow: [
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1712) : const Color(0xFFF9F7F1),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black26,
+                color: Colors.black45,
                 blurRadius: 20,
                 offset: Offset(0, -5),
               ),
@@ -51,7 +53,7 @@ class BuildSheet extends StatelessWidget {
                   width: 40,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: isDark ? const Color(0xFF5D4037) : Colors.grey[400],
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -68,10 +70,10 @@ class BuildSheet extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       buildingDef.name.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF2C3E35),
+                        color: isDark ? const Color(0xFFFFE0B2) : const Color(0xFF2C3E35),
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -84,8 +86,10 @@ class BuildSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: isLocked
-                        ? const Color(0xFFFEF3C7)
-                        : (isMaxed ? const Color(0xFFE8F5E9) : const Color(0xFFE3F2FD)),
+                        ? (isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7))
+                        : (isMaxed
+                            ? (isDark ? const Color(0xFF1B4332) : const Color(0xFFE8F5E9))
+                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE3F2FD))),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -98,8 +102,8 @@ class BuildSheet extends StatelessWidget {
                                 : 'UPGRADE TO STAGE ${currentStage + 1}')),
                     style: TextStyle(
                       color: isLocked
-                          ? const Color(0xFFB45309)
-                          : (isMaxed ? Colors.green[800] : Colors.blue[800]),
+                          ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                          : (isMaxed ? (isDark ? const Color(0xFF81C784) : Colors.green[800]) : (isDark ? const Color(0xFF90CAF9) : Colors.blue[800])),
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),
@@ -112,10 +116,12 @@ class BuildSheet extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF281E17) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isLocked ? const Color(0xFFFDE68A) : Colors.grey.shade300,
+                      color: isDark
+                          ? const Color(0xFF5D4037)
+                          : (isLocked ? const Color(0xFFFDE68A) : Colors.grey.shade300),
                     ),
                   ),
                   child: Column(
@@ -123,7 +129,9 @@ class BuildSheet extends StatelessWidget {
                       Text(
                         isLocked ? 'Plot Perk Preview' : 'Building Perk',
                         style: TextStyle(
-                          color: isLocked ? const Color(0xFFB45309) : Colors.grey,
+                          color: isLocked
+                              ? const Color(0xFFB45309)
+                              : (isDark ? const Color(0xFFB0BEC5) : Colors.grey),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -133,8 +141,8 @@ class BuildSheet extends StatelessWidget {
                       Text(
                         perkText,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF2C3E35),
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFFECEFF1) : const Color(0xFF2C3E35),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),

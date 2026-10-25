@@ -14,17 +14,27 @@ class LevelListScreen extends StatelessWidget {
     int endLevel = pack['endLevel'] ?? 10;
     int levelCount = endLevel - startLevel + 1;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF4A4A4A)),
-        title: Text(packName.toUpperCase(), style: const TextStyle(color: Color(0xFF2C3E35), fontWeight: FontWeight.w600, letterSpacing: 4)),
-        centerTitle: true,
-      ),
-      body: Consumer<UserProvider>(
-        builder: (context, user, child) {
-          return GridView.builder(
+    return Consumer<UserProvider>(
+      builder: (context, user, child) {
+        final isDark = user.darkModeEnabled;
+
+        return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF14110E) : const Color(0xFFF1F5DD),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: isDark ? const Color(0xFFECEFF1) : const Color(0xFF4A4A4A)),
+            title: Text(
+              packName.toUpperCase(),
+              style: TextStyle(
+                color: isDark ? const Color(0xFFFFE0B2) : const Color(0xFF2C3E35),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 4,
+              ),
+            ),
+            centerTitle: true,
+          ),
+          body: GridView.builder(
             padding: const EdgeInsets.all(20),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
@@ -47,19 +57,25 @@ class LevelListScreen extends StatelessWidget {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isUnlocked ? Colors.white : const Color(0xFFF9F6F0),
+                    color: isUnlocked
+                        ? (isDark ? const Color(0xFF241C15) : Colors.white)
+                        : (isDark ? const Color(0xFF1A1410) : const Color(0xFFF9F6F0)),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isCompleted ? const Color(0xFF87A8A4) : const Color(0xFFE8E3D2),
+                      color: isCompleted
+                          ? const Color(0xFF81C784)
+                          : (isDark ? const Color(0xFF4E382A) : const Color(0xFFE8E3D2)),
                       width: isCompleted ? 2 : 1,
                     ),
-                    boxShadow: isUnlocked ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      )
-                    ] : [],
+                    boxShadow: isUnlocked
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : [],
                   ),
                   child: Center(
                     child: isUnlocked
@@ -69,7 +85,9 @@ class LevelListScreen extends StatelessWidget {
                               Text(
                                 '$levelNum',
                                 style: TextStyle(
-                                  color: isCompleted ? const Color(0xFF2C3E35) : const Color(0xFF4A4A4A),
+                                  color: isCompleted
+                                      ? (isDark ? const Color(0xFF81C784) : const Color(0xFF2C3E35))
+                                      : (isDark ? const Color(0xFFECEFF1) : const Color(0xFF4A4A4A)),
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -85,21 +103,25 @@ class LevelListScreen extends StatelessWidget {
                                         size: 11,
                                         color: s < (user.levelStars[levelNum] ?? 1)
                                             ? const Color(0xFFFFB300)
-                                            : const Color(0xFFCFD8DC),
+                                            : (isDark ? const Color(0xFF5D4037) : const Color(0xFFCFD8DC)),
                                       ),
                                   ],
                                 ),
                               ],
                             ],
                           )
-                        : const Icon(Icons.lock_outline, color: Color(0xFFDCE2DF), size: 20),
+                        : Icon(
+                            Icons.lock_outline,
+                            color: isDark ? const Color(0xFF4E382A) : const Color(0xFFDCE2DF),
+                            size: 20,
+                          ),
                   ),
                 ),
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

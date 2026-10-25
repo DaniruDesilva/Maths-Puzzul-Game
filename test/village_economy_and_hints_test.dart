@@ -127,5 +127,23 @@ void main() {
       expect(provider.satisfiedEquationIds.length, greaterThanOrEqualTo(2.clamp(1, totalEqs)));
       expect(provider.hintsUsedInLevel, 2);
     });
+
+    test('UserProvider toggleDarkMode toggles and persists darkModeEnabled', () async {
+      SharedPreferences.setMockInitialValues({'setting_dark_mode': false});
+      final user = UserProvider();
+      await user.initialized;
+
+      expect(user.darkModeEnabled, isFalse);
+
+      user.toggleDarkMode();
+      expect(user.darkModeEnabled, isTrue);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('setting_dark_mode'), isTrue);
+
+      user.toggleDarkMode();
+      expect(user.darkModeEnabled, isFalse);
+      expect(prefs.getBool('setting_dark_mode'), isFalse);
+    });
   });
 }
