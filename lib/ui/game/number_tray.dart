@@ -83,8 +83,9 @@ class MathNumberTray extends StatelessWidget {
 
     final isNotes = provider.isNotesMode;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       padding: EdgeInsets.only(
         left: 10,
@@ -189,7 +190,8 @@ class MathNumberTray extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildTile(

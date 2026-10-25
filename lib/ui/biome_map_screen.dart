@@ -22,28 +22,33 @@ class BiomeMapScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF1B2620), // Dark Tavern background
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: Consumer<UserProvider>(
-                builder: (context, user, child) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: _biomes.length,
-                    itemBuilder: (context, index) {
-                      final biome = _biomes[index];
-                      return _buildBiomeCard(context, biome, user, index)
-                          .animate(delay: (100 * index).ms)
-                          .slideX(begin: 0.1, curve: Curves.easeOutCubic)
-                          .fadeIn();
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: Consumer<UserProvider>(
+                    builder: (context, user, child) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _biomes.length,
+                        itemBuilder: (context, index) {
+                          final biome = _biomes[index];
+                          return _buildBiomeCard(context, biome, user, index)
+                              .animate(delay: (100 * index).ms)
+                              .slideX(begin: 0.1, curve: Curves.easeOutCubic)
+                              .fadeIn();
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

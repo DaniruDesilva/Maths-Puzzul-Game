@@ -175,10 +175,13 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> with SingleTick
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 1. Tagline & Quick Guide Banner
@@ -503,7 +506,9 @@ class _CustomPuzzleScreenState extends State<CustomPuzzleScreen> with SingleTick
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildExplainerBanner() {

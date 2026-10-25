@@ -222,10 +222,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       availableTray: provider.availableTray,
     );
 
-    return Column(
-      children: [
-        // 1. Top Bar with Level Badge, Progress & Score
-        _buildTopBar(provider, context, isHighContrast: user.highContrastEnabled),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 580),
+        child: Column(
+          children: [
+            // 1. Top Bar with Level Badge, Progress & Score
+            _buildTopBar(provider, context, isHighContrast: user.highContrastEnabled),
 
         // 2. Equation Progress Bar
         _buildEquationProgressBar(provider, isHighContrast: user.highContrastEnabled),
@@ -292,7 +295,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         MathGameToolbar(provider: provider),
 
         const SizedBox(height: 4),
-      ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -666,9 +671,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             !provider.isCustomPuzzle);
 
     return Center(
-      child: RepaintBoundary(
-        key: _shareKey,
-        child: Container(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: RepaintBoundary(
+          key: _shareKey,
+          child: Container(
           color: const Color(0xFF0F1E16),
           child: SingleChildScrollView(
             child: Column(
@@ -980,6 +987,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
       ),
     );
   }

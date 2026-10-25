@@ -874,6 +874,30 @@ class UserProvider extends ChangeNotifier {
     return lastPlayedDate != today;
   }
 
+  /// Whether the player missed exactly 1 day and can rescue their streak
+  bool get canRescueStreak {
+    if (lastPlayedDate == null || dailyStreak <= 1) return false;
+    try {
+      final lastPlayed = DateTime.parse(lastPlayedDate!);
+      final today = DateTime.parse(DateTime.now().toIso8601String().substring(0, 10));
+      return today.difference(lastPlayed).inDays == 2;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Spend coins to repair and rescue an active streak
+  bool rescueStreakWithCoins([int cost = 50]) {
+    if (!canRescueStreak || coins < cost) return false;
+    coins -= cost;
+    // Set lastPlayedDate to yesterday so streak continues today
+    final yesterday = DateTime.now().subtract(const Duration(days: 1)).toIso8601String().substring(0, 10);
+    lastPlayedDate = yesterday;
+    _saveUser();
+    notifyListeners();
+    return true;
+  }
+
   void completeDailyChallenge() {
     if (!canPlayDailyChallenge()) return; // Already completed today!
 

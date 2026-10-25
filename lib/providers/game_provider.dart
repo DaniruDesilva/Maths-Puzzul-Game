@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import '../engine/math/models.dart';
 import '../engine/math/evaluator.dart';
 import '../engine/math/hint_engine.dart';
@@ -241,6 +242,7 @@ class GameProvider extends ChangeNotifier {
     if (cell.isBlank) {
       selectedCell = Point(r, c);
       SoundService.playClick();
+      HapticFeedback.selectionClick();
       notifyListeners();
     }
   }
@@ -248,6 +250,7 @@ class GameProvider extends ChangeNotifier {
   void toggleNotesMode() {
     isNotesMode = !isNotesMode;
     SoundService.playClick();
+    HapticFeedback.selectionClick();
     if (isNotesMode) {
       showFeedback('✏️ Notes Mode ON: Tap tray numbers to pencil candidates!', durationMs: 2500);
     } else {
@@ -302,6 +305,7 @@ class GameProvider extends ChangeNotifier {
       ));
 
       SoundService.playClick();
+      HapticFeedback.selectionClick();
       notifyListeners();
       return;
     }
@@ -333,6 +337,7 @@ class GameProvider extends ChangeNotifier {
     ));
 
     SoundService.playThwack();
+    HapticFeedback.lightImpact();
 
     // Check equations and victory condition
     _evaluateEquations();
@@ -375,6 +380,7 @@ class GameProvider extends ChangeNotifier {
     ));
 
     SoundService.playClick();
+    HapticFeedback.lightImpact();
     _evaluateEquations();
     notifyListeners();
   }
@@ -411,6 +417,7 @@ class GameProvider extends ChangeNotifier {
 
     selectedCell = Point(r, c);
     SoundService.playClick();
+    HapticFeedback.lightImpact();
     _evaluateEquations();
     notifyListeners();
   }
@@ -432,6 +439,7 @@ class GameProvider extends ChangeNotifier {
   void _evaluateEquations() {
     if (currentPuzzle == null) return;
 
+    final prevSatisfiedCount = satisfiedEquationIds.length;
     satisfiedEquationIds.clear();
     violatedEquationIds.clear();
 
@@ -460,6 +468,12 @@ class GameProvider extends ChangeNotifier {
         }
       }
     }
+
+    // Intermediate line satisfaction tactile feedback
+    if (satisfiedEquationIds.length > prevSatisfiedCount &&
+        satisfiedEquationIds.length < currentPuzzle!.equations.length) {
+      HapticFeedback.mediumImpact();
+    }
   }
 
   void _checkLevelSolved() {
@@ -481,6 +495,7 @@ class GameProvider extends ChangeNotifier {
     } else {
       mistakesInLevel++;
       SoundService.playFailure();
+      HapticFeedback.heavyImpact();
       showFeedback('Equations not matching! Check red lines.');
     }
   }
@@ -492,6 +507,7 @@ class GameProvider extends ChangeNotifier {
     final baseScore = (eqCount * 120) + (diffIndex * 80);
     score = baseScore + (100 * calculateStars());
     SoundService.playLevelComplete();
+    HapticFeedback.heavyImpact();
     notifyListeners();
     onLevelCompleteCallback?.call();
   }
@@ -512,6 +528,7 @@ class GameProvider extends ChangeNotifier {
       hintsUsedInLevel++;
       selectedCell = hint.targetCell;
       SoundService.playSuccess();
+      HapticFeedback.lightImpact();
       notifyListeners();
     }
 

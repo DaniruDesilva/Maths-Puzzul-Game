@@ -1,9 +1,11 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../../../data/village_data.dart';
 import '../../../../providers/user_provider.dart';
+import '../../../../services/sound_service.dart';
 
 class RewardBubbleComponent extends PositionComponent with TapCallbacks {
   final BuildingDef def;
@@ -140,6 +142,10 @@ class RewardBubbleComponent extends PositionComponent with TapCallbacks {
     
     userProvider.collectBuildingReward(def.id, amount, typeStr);
     
+    // Play rewarding collection feedback
+    SoundService.playBonus();
+    HapticFeedback.mediumImpact();
+
     // Hide bubble instantly
     _pendingStacks = 0;
     

@@ -57,8 +57,9 @@ class MathBoardView extends StatelessWidget {
         }
 
         // Build the core grid board widget
-        final gridWidget = Container(
-          padding: const EdgeInsets.all(boardPadding),
+        final gridWidget = RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.all(boardPadding),
           decoration: BoxDecoration(
             color: isHighContrast ? Colors.black : null,
             gradient: isHighContrast
@@ -151,6 +152,7 @@ class MathBoardView extends StatelessWidget {
               );
             }),
           ),
+        ),
         );
 
         // For massive expert puzzles (11+ cols or 11+ rows):

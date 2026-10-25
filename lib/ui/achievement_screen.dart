@@ -45,27 +45,32 @@ class AchievementScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF1B2620), // Dark Tavern background
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: Consumer<UserProvider>(
-                builder: (context, user, child) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: achievements.length,
-                    itemBuilder: (context, index) {
-                      return _buildAchievementCard(context, achievements[index], user)
-                          .animate(delay: (50 * index).ms)
-                          .slideY(begin: 0.2, curve: Curves.easeOut)
-                          .fadeIn();
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: Consumer<UserProvider>(
+                    builder: (context, user, child) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: achievements.length,
+                        itemBuilder: (context, index) {
+                          return _buildAchievementCard(context, achievements[index], user)
+                              .animate(delay: (50 * index).ms)
+                              .slideY(begin: 0.2, curve: Curves.easeOut)
+                              .fadeIn();
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

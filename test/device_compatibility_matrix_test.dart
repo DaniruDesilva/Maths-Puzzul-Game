@@ -15,6 +15,10 @@ import 'package:number_haven/ui/village/overlays/fortune_wheel_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:number_haven/data/math_level_repository.dart';
 import 'package:number_haven/ui/village/overlays/acorn_vault_dialog.dart';
+import 'package:number_haven/ui/biome_map_screen.dart';
+import 'package:number_haven/ui/custom_puzzle_screen.dart';
+import 'package:number_haven/ui/achievement_screen.dart';
+import 'package:number_haven/ui/village/overlays/build_sheet.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -231,6 +235,83 @@ void main() {
           MaterialApp(
             home: Scaffold(
               body: AcornVaultDialog(user: user),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('BiomeMapScreen renders without overflow on $deviceName', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        final user = UserProvider();
+        await user.initialized;
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<UserProvider>.value(
+            value: user,
+            child: const MaterialApp(
+              home: BiomeMapScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 2));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('CustomPuzzleScreen renders without overflow on $deviceName', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        final game = GameProvider();
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<GameProvider>.value(
+            value: game,
+            child: const MaterialApp(
+              home: CustomPuzzleScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('AchievementScreen renders without overflow on $deviceName', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        final user = UserProvider();
+        await user.initialized;
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<UserProvider>.value(
+            value: user,
+            child: const MaterialApp(
+              home: AchievementScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 2));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('BuildSheet renders without overflow on $deviceName', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        final user = UserProvider();
+        await user.initialized;
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<UserProvider>.value(
+            value: user,
+            child: MaterialApp(
+              home: Scaffold(
+                body: BuildSheet(buildingDef: VillageData.meadow.buildings.first),
+              ),
             ),
           ),
         );

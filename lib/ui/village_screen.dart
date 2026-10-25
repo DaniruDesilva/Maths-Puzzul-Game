@@ -591,10 +591,11 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                             ),
                             const SizedBox(width: 14),
                             
-                            // Daily Challenge Button
+                            // Daily Challenge Button with Streak Badge
                             _buildSideButton(
                               icon: Icons.calendar_month_rounded, 
                               color: const Color(0xFF8B5A2B), 
+                              badgeText: user.dailyStreak > 0 ? '🔥 ${user.dailyStreak}' : null,
                               onTap: user.canPlayDailyChallenge() ? () async {
                                 var provider = Provider.of<GameProvider>(context, listen: false);
                                 await provider.startDailyChallenge();
@@ -603,7 +604,9 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                                 }
                               } : () {
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                  content: const Text('Come back tomorrow for a new Daily Challenge!'),
+                                  content: Text(user.dailyStreak > 0 
+                                      ? '🔥 ${user.dailyStreak}-day streak active! Come back tomorrow for the next puzzle!'
+                                      : 'Come back tomorrow for a new Daily Challenge!'),
                                   behavior: SnackBarBehavior.floating,
                                   backgroundColor: const Color(0xFF8B5A2B),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -740,7 +743,14 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
     return badge;
   }
 
-  Widget _buildSideButton({required IconData icon, required Color color, required VoidCallback? onTap, bool hasNotification = false}) {
+  Widget _buildSideButton({
+    required IconData icon, 
+    required Color color, 
+    required VoidCallback? onTap, 
+    bool hasNotification = false,
+    String? badgeText,
+    Color badgeColor = const Color(0xFFEA580C),
+  }) {
     Widget btn = GestureDetector(
       onTap: onTap,
       child: Container(
@@ -758,7 +768,52 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
       ),
     );
     
-    if (hasNotification) {
+    if (badgeText != null) {
+      btn = Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          btn,
+          Positioned(
+            top: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                ],
+              ),
+              child: Text(
+                badgeText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+          if (hasNotification)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE53935),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+        ],
+      );
+    } else if (hasNotification) {
       btn = Stack(
         clipBehavior: Clip.none,
         children: [

@@ -31,23 +31,28 @@ class BuildSheet extends StatelessWidget {
 
         final isDark = user.darkModeEnabled;
 
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1712) : const Color(0xFFF9F7F1),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black45,
-                blurRadius: 20,
-                offset: Offset(0, -5),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1712) : const Color(0xFFF9F7F1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 20,
+                    offset: Offset(0, -5),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                 // Handle
                 Container(
                   width: 40,
@@ -218,33 +223,36 @@ class BuildSheet extends StatelessWidget {
                                   ? const BorderSide(color: Color(0xFFFFD54F), width: 3.5)
                                   : null,
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  currentStage == 0 ? 'BUILD FOR ' : 'UPGRADE FOR ',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    letterSpacing: 1,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    currentStage == 0 ? 'BUILD FOR ' : 'UPGRADE FOR ',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 1,
+                                    ),
                                   ),
-                                ),
-                                const Icon(
-                                  Icons.monetization_on_rounded,
-                                  color: Color(0xFFF2C94C),
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '$cost',
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
+                                  const Icon(
+                                    Icons.monetization_on_rounded,
+                                    color: Color(0xFFF2C94C),
+                                    size: 24,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$cost',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -268,68 +276,88 @@ class BuildSheet extends StatelessWidget {
                         // Not enough button
                         Expanded(
                           child: Container(
-                            height: 54,
+                            height: 52,
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: isDark ? const Color(0xFF2D231B) : Colors.grey[200],
                               borderRadius: BorderRadius.circular(28),
-                              border: Border.all(color: Colors.grey.shade400),
+                              border: Border.all(color: isDark ? const Color(0xFF5D4037) : Colors.grey.shade400),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'NEED ',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.black54,
-                                  ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'NEED ',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                        color: isDark ? const Color(0xFFBCAAA4) : Colors.black54,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.monetization_on_rounded,
+                                      color: Color(0xFFF59E0B),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$cost',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: isDark ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const Icon(
-                                  Icons.monetization_on_rounded,
-                                  color: Color(0xFFF59E0B),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$cost',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         // Get Coins shortcut to Store
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const StoreScreen()),
-                            );
-                          },
-                          icon: const Icon(Icons.storefront_rounded, color: Colors.white, size: 20),
-                          label: const Text(
-                            'GET COINS',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
+                        Expanded(
+                          child: SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const StoreScreen()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF59E0B),
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.storefront_rounded, color: Colors.white, size: 20),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'GET COINS',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF59E0B),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            elevation: 4,
                           ),
                         ),
                       ],
@@ -347,7 +375,10 @@ class BuildSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-              ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         );
