@@ -130,6 +130,37 @@ class UserProvider extends ChangeNotifier {
       !showCottageTutorial &&
       !hasCompletedVillageTutorial;
 
+  /// Total building stages unlocked across the entire village (0 to 15)
+  int get villageTotalBuildingStages {
+    int total = 0;
+    const buildingIds = ['cottage', 'bakery', 'windmill', 'library', 'tower'];
+    for (final id in buildingIds) {
+      total += (villageBuildings[id] ?? 0).clamp(0, 3);
+    }
+    return total;
+  }
+
+  /// Village completion percentage (0% to 100%)
+  int get villageCompletionPercent {
+    return ((villageTotalBuildingStages / 15.0) * 100).round().clamp(0, 100);
+  }
+
+  /// Village Prosperity Score (combines building stages, brain size, and solved levels)
+  int get villageProsperityScore {
+    return (villageTotalBuildingStages * 120) + (brainSize ~/ 2) + (levelsCompleted * 8);
+  }
+
+  /// Title awarded according to village development milestones
+  String get villageArchitectTitle {
+    final stages = villageTotalBuildingStages;
+    if (stages >= 15) return 'Legendary Mayor 👑';
+    if (stages >= 12) return 'Master Architect 🏛️';
+    if (stages >= 9) return 'Grand Visionary 🏰';
+    if (stages >= 6) return 'Hamlet Craftsman 🔨';
+    if (stages >= 3) return 'Cozy Builder 🏡';
+    return 'Village Pioneer 🌿';
+  }
+
   SharedPreferences? _prefs;
 
   UserProvider() {

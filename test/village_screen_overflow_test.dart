@@ -7,6 +7,7 @@ import 'package:number_haven/providers/user_provider.dart';
 import 'package:number_haven/providers/game_provider.dart';
 import 'package:number_haven/services/sound_service.dart';
 import 'package:number_haven/ui/village_screen.dart';
+import 'package:number_haven/ui/village/overlays/village_snapshot_dialog.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -97,6 +98,43 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1000));
 
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Tapping Camera Snapshot button in VillageScreen opens VillageSnapshotDialog', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      final user = UserProvider();
+      await user.initialized;
+      user.claimStarterGift();
+      user.completeCottageTutorial();
+      user.completeVillageTutorial();
+      final game = GameProvider();
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<UserProvider>.value(value: user),
+            ChangeNotifierProvider<GameProvider>.value(value: game),
+          ],
+          child: MaterialApp(
+            home: VillageScreen(
+              village: VillageData.meadow,
+              isRoot: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Find camera snapshot button and tap it
+      final cameraBtn = find.byIcon(Icons.camera_alt_rounded);
+      expect(cameraBtn, findsOneWidget);
+      await tester.tap(cameraBtn, warnIfMissed: false);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(VillageSnapshotDialog), findsOneWidget);
     });
   });
 }

@@ -17,6 +17,7 @@ import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
 import 'village/overlays/fortune_wheel_dialog.dart';
 import 'village/overlays/acorn_vault_dialog.dart';
+import 'village/overlays/village_snapshot_dialog.dart';
 import 'common/cartoon_hand_pointer.dart';
 
 class VillageScreen extends StatefulWidget {
@@ -348,6 +349,27 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                                     );
                                   },
                                 ),
+                                const SizedBox(width: 8),
+
+                                // Village Snapshot & Community Showcase Button
+                                GestureDetector(
+                                  onTap: () => _showVillageSnapshot(context, user),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF0C4A6E) : const Color(0xFF0284C7),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFFBAE6FD),
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4),
+                                      ],
+                                    ),
+                                    child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -355,13 +377,36 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                       
                       // Top Right: Currency & Helpers (Coins ONLY if !isRoot)
                       if (!widget.isRoot)
-                        _buildTopBadge(
-                          Icons.monetization_on_rounded,
-                          '${user.coins}',
-                          const Color(0xFFFFD54F),
-                          showAddIcon: true,
-                          onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
-                          isDark: isDark,
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showVillageSnapshot(context, user),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF0C4A6E) : const Color(0xFF0284C7),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFFBAE6FD),
+                                    width: 2.5,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4),
+                                  ],
+                                ),
+                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildTopBadge(
+                              Icons.monetization_on_rounded,
+                              '${user.coins}',
+                              const Color(0xFFFFD54F),
+                              showAddIcon: true,
+                              onTap: () => _navigate(AppRouter.store, arguments: 'coins'),
+                              isDark: isDark,
+                            ),
+                          ],
                         )
                       else
                         Row(
@@ -1105,6 +1150,19 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
       context: context,
       useRootNavigator: true,
       builder: (context) => AcornVaultDialog(user: user),
+    );
+    if (mounted) {
+      _game.resumeEngine();
+    }
+  }
+
+  void _showVillageSnapshot(BuildContext context, UserProvider user) async {
+    SoundService.playClick();
+    _game.pauseEngine();
+    await showDialog(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => VillageSnapshotDialog(user: user),
     );
     if (mounted) {
       _game.resumeEngine();
