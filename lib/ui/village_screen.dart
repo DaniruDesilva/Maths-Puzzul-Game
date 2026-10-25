@@ -12,6 +12,7 @@ import '../app_router.dart';
 import '../services/sound_service.dart';
 import '../services/purchase_service.dart';
 import '../services/app_review_service.dart';
+import '../services/game_services_helper.dart';
 
 import 'village/overlays/build_sheet.dart';
 import 'village/overlays/starter_gift_dialog.dart';
@@ -886,7 +887,12 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                     const SizedBox(height: 8),
                     _buildSettingRow('High Contrast 👁️', Icons.contrast_rounded, user.highContrastEnabled, user.toggleHighContrast, isDark: isDark),
                     
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
+
+                    // Google Play Games Services Card
+                    _buildPlayGamesCard(context, user, isDark: isDark),
+
+                    const SizedBox(height: 12),
 
                     // Rate App Button (Guaranteed single line with FittedBox)
                     SizedBox(
@@ -1256,6 +1262,242 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPlayGamesCard(BuildContext context, UserProvider user, {required bool isDark}) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: GameServicesHelper.isSignedInNotifier,
+      builder: (context, isSignedIn, _) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1611) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSignedIn 
+                  ? const Color(0xFF4CAF50) 
+                  : (isDark ? const Color(0xFF4E342E) : const Color(0xFFE8E3D2)),
+              width: 1.5,
+            ),
+            boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(0, 2), blurRadius: 4)],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row: Icon + Title + Status Pill
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.sports_esports_rounded, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'PLAY GAMES',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                        fontSize: 15,
+                        color: isDark ? const Color(0xFFECEFF1) : const Color(0xFF2E7D32),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isSignedIn ? const Color(0xFF2E7D32) : Colors.grey.shade600,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSignedIn ? Icons.check_circle_rounded : Icons.cloud_off_rounded,
+                          color: Colors.white,
+                          size: 11,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isSignedIn ? 'ONLINE' : 'OFFLINE',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              if (isSignedIn) ...[
+                // Player Info
+                ValueListenableBuilder<PlayerData?>(
+                  valueListenable: GameServicesHelper.playerNotifier,
+                  builder: (context, player, _) {
+                    final name = player?.displayName ?? 'Woodland Gamer';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Signed in as: $name',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.baloo2().fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? const Color(0xFFB0BEC5) : const Color(0xFF5D4037),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  },
+                ),
+
+                // Action Buttons: Leaderboards, Achievements, Cloud Save
+                Row(
+                  children: [
+                    // Leaderboards
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => GameServicesHelper.showLeaderboards(),
+                        icon: const Icon(Icons.leaderboard_rounded, size: 14),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('RANKS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Achievements
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => GameServicesHelper.showAchievements(),
+                        icon: const Icon(Icons.emoji_events_rounded, size: 14),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('TROPHIES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Cloud Sync
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final ok = await user.saveToCloud();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(ok ? '☁️ Village synced with Google Play Cloud!' : 'Could not sync cloud save.'),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: const Color(0xFF2E7D32),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.cloud_upload_rounded, size: 14),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('BACKUP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0288D1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          minimumSize: const Size(0, 36),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                // Sign In Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      if (!GameServicesHelper.isPlatformSupported) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Google Play Games is available on Android devices.'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF5D4037),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        );
+                        return;
+                      }
+                      final ok = await GameServicesHelper.signIn();
+                      if (ok) {
+                        await user.checkAndSyncPlayGames();
+                        await user.saveToCloud();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Connected to Google Play Games! Progress synced.'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFF2E7D32),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                          );
+                        }
+                      } else if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Sign in failed or cancelled. Please check Play Games app.'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF5D4037),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.login_rounded, size: 16),
+                    label: const Text(
+                      'CONNECT GOOGLE PLAY GAMES',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 

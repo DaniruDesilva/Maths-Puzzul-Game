@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Google Play Games Services Configuration -->
+    <!-- Replace this placeholder with your numeric Project ID from Google Play Console (Grow > Play Games Services > Setup) -->
+    <string name="game_services_project_id">000000000000</string>
+</resources>

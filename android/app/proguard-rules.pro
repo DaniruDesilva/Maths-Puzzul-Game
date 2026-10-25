@@ -42,4 +42,10 @@
 # Vibration
 -keep class com.benjaminabel.vibration.** { *; }
 
+# Google Play Games Services
+-keep class com.google.android.gms.games.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-dontwarn com.google.android.gms.games.**
+
+
 

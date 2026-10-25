@@ -5,6 +5,7 @@ import '../data/database_helper.dart';
 import '../services/sound_service.dart';
 import '../services/purchase_service.dart';
 import '../services/notification_service.dart';
+import '../services/game_services_helper.dart';
 import 'package:vibration/vibration.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -625,6 +626,19 @@ class UserProvider extends ChangeNotifier {
     _saveUser();
     notifyListeners();
 
+    // Synchronize scores to Google Play Games & iOS Game Center leaderboards
+    GameServicesHelper.submitScore(
+      leaderboardId: GameServicesHelper.leaderboardBrainSize,
+      score: brainSize,
+    );
+    GameServicesHelper.submitScore(
+      leaderboardId: GameServicesHelper.leaderboardLevelsCompleted,
+      score: levelsCompleted,
+    );
+    if (levelsCompleted >= 10) GameServicesHelper.unlockAchievement('levels_10');
+    if (levelsCompleted >= 50) GameServicesHelper.unlockAchievement('levels_50');
+    if (levelsCompleted >= 150) GameServicesHelper.unlockAchievement('levels_150');
+
     return {
       'baseCoins': baseCoinsEarned,
       'starCoins': starCoinsEarned,
@@ -645,6 +659,11 @@ class UserProvider extends ChangeNotifier {
     }
     _saveUser();
     notifyListeners();
+
+    // Check progressive equation achievements on Google Play Games
+    if (wordsFound >= 50) GameServicesHelper.unlockAchievement('words_50');
+    if (wordsFound >= 250) GameServicesHelper.unlockAchievement('words_250');
+    if (wordsFound >= 1000) GameServicesHelper.unlockAchievement('words_1000');
   }
 
   void addWordFound() {
@@ -705,6 +724,9 @@ class UserProvider extends ChangeNotifier {
       hintsRegular += rewardHints;
       _saveUser();
       notifyListeners();
+
+      // Synchronize with Google Play Games & iOS Game Center
+      GameServicesHelper.unlockAchievement(id);
     }
   }
 
@@ -936,6 +958,125 @@ class UserProvider extends ChangeNotifier {
     
     _saveUser();
     notifyListeners();
+
+    // Synchronize daily streak to Google Play Games & iOS Game Center
+    GameServicesHelper.submitScore(
+      leaderboardId: GameServicesHelper.leaderboardDailyStreak,
+      score: dailyStreak,
+    );
+    if (dailyStreak >= 3) GameServicesHelper.unlockAchievement('streak_3');
+    if (dailyStreak >= 7) GameServicesHelper.unlockAchievement('streak_7');
+  }
+
+  /// Submits all current player stats and unlocked achievements to Play Games
+  Future<void> checkAndSyncPlayGames() async {
+    if (!GameServicesHelper.isPlatformSupported) return;
+
+    // Submit scores to all 3 leaderboards
+    await GameServicesHelper.syncAllPlayerScores(
+      brainSize: brainSize,
+      levelsCompleted: levelsCompleted,
+      dailyStreak: dailyStreak,
+    );
+
+    // Retroactively unlock all achievements the player has qualified for
+    const milestoneMap = {
+      'words_50': 50,
+      'words_250': 250,
+      'words_1000': 1000,
+      'levels_10': 10,
+      'levels_50': 50,
+      'levels_150': 150,
+      'hints_20': 20,
+      'streak_3': 3,
+      'streak_7': 7,
+    };
+
+    for (final entry in milestoneMap.entries) {
+      int current = 0;
+      if (entry.key.startsWith('words_')) {
+        current = wordsFound;
+      } else if (entry.key.startsWith('levels_')) {
+        current = levelsCompleted;
+      } else if (entry.key.startsWith('hints_')) {
+        current = hintsUsedTotal;
+      } else if (entry.key.startsWith('streak_')) {
+        current = dailyStreak;
+      }
+
+      if (current >= entry.value) {
+        GameServicesHelper.unlockAchievement(entry.key);
+      }
+    }
+  }
+
+  /// Saves complete game state to Google Play Games Cloud Saves
+  Future<bool> saveToCloud() async {
+    final gameData = {
+      'brainSize': brainSize,
+      'totalScore': totalScore,
+      'coins': coins,
+      'levelsCompleted': levelsCompleted,
+      'levelStars': levelStars.map((k, v) => MapEntry(k.toString(), v)),
+      'wordsFound': wordsFound,
+      'dailyStreak': dailyStreak,
+      'lastPlayedDate': lastPlayedDate,
+      'villageBuildings': villageBuildings,
+      'claimedAchievements': claimedAchievements,
+      'bonusJar': bonusJar,
+      'totalBonusWords': totalBonusWords,
+      'savedAt': DateTime.now().toIso8601String(),
+    };
+    return await GameServicesHelper.saveCloudSnapshot(gameData: gameData);
+  }
+
+  /// Restores progress from Google Play Games Cloud Saves (merging best progress)
+  Future<bool> restoreFromCloud() async {
+    final cloudData = await GameServicesHelper.loadCloudSnapshot();
+    if (cloudData == null) return false;
+
+    try {
+      final cloudLevels = cloudData['levelsCompleted'] as int? ?? 0;
+      final cloudBrain = cloudData['brainSize'] as int? ?? 0;
+      final cloudCoins = cloudData['coins'] as int? ?? 0;
+      final cloudWords = cloudData['wordsFound'] as int? ?? 0;
+      final cloudStreak = cloudData['dailyStreak'] as int? ?? 0;
+
+      if (cloudLevels > levelsCompleted) levelsCompleted = cloudLevels;
+      if (cloudBrain > brainSize) brainSize = cloudBrain;
+      if (cloudCoins > coins) coins = cloudCoins;
+      if (cloudWords > wordsFound) wordsFound = cloudWords;
+      if (cloudStreak > dailyStreak) dailyStreak = cloudStreak;
+
+      if (cloudData['villageBuildings'] is Map) {
+        final bMap = cloudData['villageBuildings'] as Map;
+        bMap.forEach((k, v) {
+          final key = k.toString();
+          final val = v as int? ?? 0;
+          final current = villageBuildings[key] ?? 0;
+          if (val > current) {
+            villageBuildings[key] = val;
+            _prefs?.setInt('village_$key', val);
+          }
+        });
+      }
+
+      if (cloudData['claimedAchievements'] is List) {
+        final cList = (cloudData['claimedAchievements'] as List).map((e) => e.toString()).toList();
+        for (var id in cList) {
+          if (!claimedAchievements.contains(id)) {
+            claimedAchievements.add(id);
+          }
+        }
+      }
+
+      await _saveUser();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error restoring cloud save: $e');
+      return false;
+    }
   }
 
   Future<void> _saveUser() async {

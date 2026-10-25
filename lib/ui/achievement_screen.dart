@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/user_provider.dart';
+import '../services/game_services_helper.dart';
 
 class AchievementData {
   final String id;
@@ -110,7 +111,52 @@ class AchievementScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 56), // Balance the back button
+          GestureDetector(
+            onTap: () async {
+              if (!GameServicesHelper.isPlatformSupported) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Google Play Games is available on Android devices.'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: const Color(0xFF5D4037),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                );
+                return;
+              }
+              if (GameServicesHelper.isSignedIn) {
+                await GameServicesHelper.showAchievements();
+              } else {
+                final signedIn = await GameServicesHelper.signIn();
+                if (signedIn) {
+                  if (context.mounted) {
+                    final user = Provider.of<UserProvider>(context, listen: false);
+                    await user.checkAndSyncPlayGames();
+                  }
+                  await GameServicesHelper.showAchievements();
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Sign in to Google Play Games to view achievements!'),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: const Color(0xFF5D4037),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  );
+                }
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32), // Forest green Play Games accent
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF1B5E20), width: 2),
+                boxShadow: const [BoxShadow(color: Colors.black45, offset: Offset(0, 4))],
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD54F), size: 28),
+            ),
+          ),
         ],
       ),
     );

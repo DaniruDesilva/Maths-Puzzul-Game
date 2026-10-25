@@ -7,6 +7,7 @@ import 'providers/user_provider.dart';
 import 'services/notification_service.dart';
 import 'services/sound_service.dart';
 import 'services/ad_service.dart';
+import 'services/game_services_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_router.dart';
 
@@ -34,6 +35,12 @@ void main() async {
     AdService.initialize();
   } catch (e) {
     debugPrint('AdService init error: $e');
+  }
+
+  try {
+    await GameServicesHelper.initialize();
+  } catch (e) {
+    debugPrint('GameServicesHelper init error: $e');
   }
 
   // Lock to portrait mode for best mobile experience

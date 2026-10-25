@@ -45,6 +45,11 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-5105772344719492~8039489656"/>
 
+        <!-- Google Play Games Services Application ID -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/game_services_project_id" />
+
         <!-- Flutter Local Notifications Receivers for Background Scheduling & Boot Recovery -->
         <receiver 
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" 
