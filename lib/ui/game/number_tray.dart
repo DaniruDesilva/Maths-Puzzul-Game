@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/user_provider.dart';
 import 'interactive_onboarding_overlay.dart';
 
 class MathNumberTray extends StatelessWidget {
@@ -16,6 +18,8 @@ class MathNumberTray extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final available = provider.availableTray;
+    final user = Provider.of<UserProvider>(context);
+    final isHighContrast = user.highContrastEnabled;
 
     if (available.isEmpty) {
       return Container(
@@ -23,18 +27,21 @@ class MathNumberTray extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF26190F),
-              Color(0xFF1A1009),
-            ],
-          ),
+          color: isHighContrast ? Colors.black : null,
+          gradient: isHighContrast
+              ? null
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF26190F),
+                    Color(0xFF1A1009),
+                  ],
+                ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.5),
-            width: 1.5,
+            color: isHighContrast ? Colors.white : const Color(0xFF10B981).withValues(alpha: 0.5),
+            width: isHighContrast ? 2.5 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
@@ -47,16 +54,16 @@ class MathNumberTray extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.auto_awesome_rounded,
-              color: Color(0xFFFBBF24),
+              color: isHighContrast ? const Color(0xFFFFEA00) : const Color(0xFFFBBF24),
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
               'All numbers placed!',
               style: TextStyle(
-                color: const Color(0xFFFDE68A),
+                color: isHighContrast ? Colors.white : const Color(0xFFFDE68A),
                 fontFamily: GoogleFonts.baloo2().fontFamily,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -86,26 +93,31 @@ class MathNumberTray extends StatelessWidget {
         top: tutorialTargetNumber != null ? 24 : (isNotes ? 6 : 8),
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isNotes
-              ? const [
-                  Color(0xFF332012), // Warm amber wood tone
-                  Color(0xFF1E1208),
-                ]
-              : const [
-                  Color(0xFF2A1B10), // Warm workbench oak
-                  Color(0xFF191008), // Shadowed cedar
-                ],
-        ),
+        color: isHighContrast ? Colors.black : null,
+        gradient: isHighContrast
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isNotes
+                    ? const [
+                        Color(0xFF332012), // Warm amber wood tone
+                        Color(0xFF1E1208),
+                      ]
+                    : const [
+                        Color(0xFF2A1B10), // Warm workbench oak
+                        Color(0xFF191008), // Shadowed cedar
+                      ],
+              ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isNotes ? const Color(0xFFF59E0B) : const Color(0xFF5A3C23),
-          width: isNotes ? 2.0 : 1.8,
+          color: isHighContrast
+              ? (isNotes ? const Color(0xFFFFEA00) : Colors.white)
+              : (isNotes ? const Color(0xFFF59E0B) : const Color(0xFF5A3C23)),
+          width: isHighContrast ? 2.6 : (isNotes ? 2.0 : 1.8),
         ),
         boxShadow: [
-          if (isNotes)
+          if (isNotes && !isHighContrast)
             BoxShadow(
               color: const Color(0xFFF59E0B).withValues(alpha: 0.28),
               blurRadius: 10,
@@ -127,16 +139,16 @@ class MathNumberTray extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.edit_note_rounded,
-                    color: Color(0xFFFFD54F),
+                    color: isHighContrast ? const Color(0xFFFFEA00) : const Color(0xFFFFD54F),
                     size: 15,
                   ),
                   const SizedBox(width: 5),
                   Text(
                     'PENCIL NOTES ACTIVE • Tap numbers to jot candidates',
                     style: TextStyle(
-                      color: const Color(0xFFFFD54F),
+                      color: isHighContrast ? const Color(0xFFFFEA00) : const Color(0xFFFFD54F),
                       fontFamily: GoogleFonts.baloo2().fontFamily,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -161,7 +173,15 @@ class MathNumberTray extends StatelessWidget {
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                    child: _buildTile(context, number, count, isHintNumber, isTutorialNumber, isNotes),
+                    child: _buildTile(
+                      context,
+                      number,
+                      count,
+                      isHintNumber,
+                      isTutorialNumber,
+                      isNotes,
+                      isHighContrast: isHighContrast,
+                    ),
                   );
                 }).toList(),
               ),
@@ -178,8 +198,9 @@ class MathNumberTray extends StatelessWidget {
     int count,
     bool isHintNumber,
     bool isTutorialNumber,
-    bool isNotes,
-  ) {
+    bool isNotes, {
+    bool isHighContrast = false,
+  }) {
     return GestureDetector(
       onTap: () => provider.placeNumber(number),
       behavior: HitTestBehavior.opaque,
@@ -192,32 +213,47 @@ class MathNumberTray extends StatelessWidget {
             height: 52,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isTutorialNumber
-                    ? [
-                        const Color(0xFFF59E0B),
-                        const Color(0xFFB45309),
-                      ]
-                    : isHintNumber
-                        ? [
-                            const Color(0xFF10B981),
-                            const Color(0xFF047857),
-                          ]
-                        : [
-                            const Color(0xFF785130), // Beveled top highlight
-                            const Color(0xFF4E321C), // Deep wooden core
-                          ],
-              ),
+              color: isHighContrast
+                  ? (isTutorialNumber
+                      ? const Color(0xFFFFEA00)
+                      : (isHintNumber
+                          ? const Color(0xFF00FF66)
+                          : (isNotes ? const Color(0xFF1E1E1E) : Colors.white)))
+                  : null,
+              gradient: isHighContrast
+                  ? null
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isTutorialNumber
+                          ? [
+                              const Color(0xFFF59E0B),
+                              const Color(0xFFB45309),
+                            ]
+                          : isHintNumber
+                              ? [
+                                  const Color(0xFF10B981),
+                                  const Color(0xFF047857),
+                                ]
+                              : [
+                                  const Color(0xFF785130), // Beveled top highlight
+                                  const Color(0xFF4E321C), // Deep wooden core
+                                ],
+                    ),
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: isTutorialNumber
-                    ? const Color(0xFFFDE68A)
-                    : isHintNumber
-                        ? const Color(0xFF6EE7B7)
-                        : const Color(0xFFA07248),
-                width: isTutorialNumber ? 2.6 : (isHintNumber ? 2.2 : 1.5),
+                color: isHighContrast
+                    ? (isTutorialNumber
+                        ? Colors.black
+                        : (isHintNumber
+                            ? Colors.black
+                            : (isNotes ? const Color(0xFFFFEA00) : Colors.black)))
+                    : (isTutorialNumber
+                        ? const Color(0xFFFDE68A)
+                        : isHintNumber
+                            ? const Color(0xFF6EE7B7)
+                            : const Color(0xFFA07248)),
+                width: isHighContrast ? 2.8 : (isTutorialNumber ? 2.6 : (isHintNumber ? 2.2 : 1.5)),
               ),
               boxShadow: [
                 if (isTutorialNumber)
@@ -242,17 +278,21 @@ class MathNumberTray extends StatelessWidget {
             child: Text(
               '$number',
               style: TextStyle(
-                color: const Color(0xFFFFFBEB), // Warm glowing ivory
+                color: isHighContrast
+                    ? (isNotes ? const Color(0xFFFFEA00) : Colors.black)
+                    : const Color(0xFFFFFBEB), // Warm glowing ivory
                 fontFamily: GoogleFonts.lilitaOne().fontFamily,
                 fontSize: 23,
                 fontWeight: FontWeight.w900,
-                shadows: const [
-                  Shadow(
-                    color: Color(0xAA000000),
-                    offset: Offset(0, 1.5),
-                    blurRadius: 2,
-                  ),
-                ],
+                shadows: isHighContrast
+                    ? null
+                    : const [
+                        Shadow(
+                          color: Color(0xAA000000),
+                          offset: Offset(0, 1.5),
+                          blurRadius: 2,
+                        ),
+                      ],
               ),
             ),
           ),
@@ -280,14 +320,20 @@ class MathNumberTray extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFF59E0B),
-                      Color(0xFFD97706),
-                    ],
-                  ),
+                  color: isHighContrast ? Colors.black : null,
+                  gradient: isHighContrast
+                      ? null
+                      : const LinearGradient(
+                          colors: [
+                            Color(0xFFF59E0B),
+                            Color(0xFFD97706),
+                          ],
+                        ),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white, width: 1.2),
+                  border: Border.all(
+                    color: isHighContrast ? const Color(0xFFFFEA00) : Colors.white,
+                    width: isHighContrast ? 1.6 : 1.2,
+                  ),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -298,8 +344,8 @@ class MathNumberTray extends StatelessWidget {
                 ),
                 child: Text(
                   '×$count',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isHighContrast ? const Color(0xFFFFEA00) : Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     height: 1.1,
@@ -316,14 +362,20 @@ class MathNumberTray extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFF59E0B),
-                      Color(0xFFD97706),
-                    ],
-                  ),
+                  color: isHighContrast ? Colors.black : null,
+                  gradient: isHighContrast
+                      ? null
+                      : const LinearGradient(
+                          colors: [
+                            Color(0xFFF59E0B),
+                            Color(0xFFD97706),
+                          ],
+                        ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFFFBEB), width: 1.2),
+                  border: Border.all(
+                    color: isHighContrast ? const Color(0xFFFFEA00) : const Color(0xFFFFFBEB),
+                    width: isHighContrast ? 1.6 : 1.2,
+                  ),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -332,9 +384,9 @@ class MathNumberTray extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.edit_rounded,
-                  color: Colors.white,
+                  color: isHighContrast ? const Color(0xFFFFEA00) : Colors.white,
                   size: 9.5,
                 ),
               ),

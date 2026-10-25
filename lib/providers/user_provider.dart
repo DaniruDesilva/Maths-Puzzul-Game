@@ -44,6 +44,7 @@ class UserProvider extends ChangeNotifier {
   bool hapticsEnabled = true;
   bool notificationsEnabled = true;
   bool darkModeEnabled = false;
+  bool highContrastEnabled = false;
   
   bool isLoading = true;
   final Completer<void> _initCompleter = Completer<void>();
@@ -189,6 +190,7 @@ class UserProvider extends ChangeNotifier {
     hapticsEnabled = _prefs!.getBool('setting_haptics') ?? true;
     notificationsEnabled = _prefs!.getBool('setting_notifications') ?? true;
     darkModeEnabled = _prefs!.getBool('setting_dark_mode') ?? false;
+    highContrastEnabled = _prefs!.getBool('setting_high_contrast') ?? false;
     
     // Onboarding & Tooltip preferences
     hasCompletedVillageTutorial = _prefs!.getBool('has_completed_village_tutorial') ?? false;
@@ -746,6 +748,14 @@ class UserProvider extends ChangeNotifier {
     darkModeEnabled = !darkModeEnabled;
     if (_prefs != null) {
       _prefs!.setBool('setting_dark_mode', darkModeEnabled);
+    }
+    notifyListeners();
+  }
+
+  void toggleHighContrast() {
+    highContrastEnabled = !highContrastEnabled;
+    if (_prefs != null) {
+      _prefs!.setBool('setting_high_contrast', highContrastEnabled);
     }
     notifyListeners();
   }

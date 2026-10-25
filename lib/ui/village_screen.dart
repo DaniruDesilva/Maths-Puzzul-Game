@@ -783,6 +783,8 @@ class _VillageScreenState extends State<VillageScreen> with WidgetsBindingObserv
                     _buildSettingRow('Daily Reminder', Icons.notifications_active_rounded, user.notificationsEnabled, user.toggleNotifications, isDark: isDark),
                     const SizedBox(height: 8),
                     _buildSettingRow('Dark Mode 🌙', Icons.dark_mode_rounded, user.darkModeEnabled, user.toggleDarkMode, isDark: isDark),
+                    const SizedBox(height: 8),
+                    _buildSettingRow('High Contrast 👁️', Icons.contrast_rounded, user.highContrastEnabled, user.toggleHighContrast, isDark: isDark),
                     
                     const SizedBox(height: 14),
 

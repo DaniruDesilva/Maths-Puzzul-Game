@@ -145,5 +145,23 @@ void main() {
       expect(user.darkModeEnabled, isFalse);
       expect(prefs.getBool('setting_dark_mode'), isFalse);
     });
+
+    test('UserProvider toggleHighContrast toggles and persists highContrastEnabled', () async {
+      SharedPreferences.setMockInitialValues({'setting_high_contrast': false});
+      final user = UserProvider();
+      await user.initialized;
+
+      expect(user.highContrastEnabled, isFalse);
+
+      user.toggleHighContrast();
+      expect(user.highContrastEnabled, isTrue);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('setting_high_contrast'), isTrue);
+
+      user.toggleHighContrast();
+      expect(user.highContrastEnabled, isFalse);
+      expect(prefs.getBool('setting_high_contrast'), isFalse);
+    });
   });
 }

@@ -1205,6 +1205,47 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   Navigator.pop(context);
                 }),
                 const SizedBox(height: 12),
+                Consumer<UserProvider>(
+                  builder: (context, user, _) {
+                    final isHc = user.highContrastEnabled;
+                    return GestureDetector(
+                      onTap: () => user.toggleHighContrast(),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isHc ? Colors.white : Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isHc ? Colors.black : Colors.white24,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.contrast_rounded,
+                              color: isHc ? Colors.black : const Color(0xFFFFD54F),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isHc ? 'HIGH CONTRAST: ON 👁️' : 'HIGH CONTRAST: OFF 👁️',
+                              style: TextStyle(
+                                color: isHc ? Colors.black : Colors.white,
+                                fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                fontSize: 14,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
                 _buildMenuButton('QUIT TO VILLAGE', const Color(0xFFEF4444), () {
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context); // Close GameScreen

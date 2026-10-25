@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/user_provider.dart';
 import 'board_cell.dart';
 
 class MathBoardView extends StatelessWidget {
@@ -21,6 +23,9 @@ class MathBoardView extends StatelessWidget {
         child: CircularProgressIndicator(color: Color(0xFF10B981)),
       );
     }
+
+    final user = Provider.of<UserProvider>(context);
+    final isHighContrast = user.highContrastEnabled;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -55,30 +60,34 @@ class MathBoardView extends StatelessWidget {
         final gridWidget = Container(
           padding: const EdgeInsets.all(boardPadding),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF26190F), // Deep walnut
-                Color(0xFF180F09), // Aged dark cedar
-              ],
-            ),
+            color: isHighContrast ? Colors.black : null,
+            gradient: isHighContrast
+                ? null
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF26190F), // Deep walnut
+                      Color(0xFF180F09), // Aged dark cedar
+                    ],
+                  ),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: const Color(0xFF5D3E24), // Warm carved wood rim
-              width: 2.2,
+              color: isHighContrast ? Colors.white : const Color(0xFF5D3E24), // High contrast stark border
+              width: isHighContrast ? 3.0 : 2.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.65),
+                color: Colors.black.withValues(alpha: isHighContrast ? 0.9 : 0.65),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
-              const BoxShadow(
-                color: Color(0x33F59E0B),
-                blurRadius: 2,
-                spreadRadius: 1,
-              ),
+              if (!isHighContrast)
+                const BoxShadow(
+                  color: Color(0x33F59E0B),
+                  blurRadius: 2,
+                  spreadRadius: 1,
+                ),
             ],
           ),
           child: Column(
@@ -133,6 +142,7 @@ class MathBoardView extends StatelessWidget {
                         notes: cellNotes,
                         isNotesMode: provider.isNotesMode,
                         size: baseCellSize,
+                        isHighContrast: isHighContrast,
                         onTap: () => provider.selectCell(r, c),
                       ),
                     );

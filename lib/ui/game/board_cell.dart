@@ -16,6 +16,7 @@ class BoardCellWidget extends StatelessWidget {
   final bool isTutorialTarget;
   final VoidCallback? onTap;
   final double size;
+  final bool isHighContrast;
 
   const BoardCellWidget({
     super.key,
@@ -31,6 +32,7 @@ class BoardCellWidget extends StatelessWidget {
     this.isNotesMode = false,
     this.onTap,
     this.size = 52.0,
+    this.isHighContrast = false,
   });
 
   @override
@@ -53,6 +55,58 @@ class BoardCellWidget extends StatelessWidget {
 
   // --- Operator Cell (+, -, x, /) ---
   Widget _buildOpCell() {
+    if (isHighContrast) {
+      Color opColor;
+      switch (cell.op) {
+        case Op.add:
+          opColor = const Color(0xFF00FF66); // High-vis Neon Green
+          break;
+        case Op.sub:
+          opColor = const Color(0xFFFF5500); // High-vis Blaze Orange
+          break;
+        case Op.mul:
+          opColor = const Color(0xFFFFDD00); // High-vis Bright Yellow
+          break;
+        case Op.div:
+          opColor = const Color(0xFF00EEFF); // High-vis Electric Cyan
+          break;
+        default:
+          opColor = Colors.white;
+      }
+
+      final isLit = isInSatisfiedEquation || isInActiveEquation;
+
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isLit ? const Color(0xFF1E1E1E) : Colors.black,
+          borderRadius: BorderRadius.circular(size * 0.22),
+          border: Border.all(
+            color: isLit ? Colors.white : opColor,
+            width: 2.8,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black87,
+              offset: Offset(0, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Text(
+          cell.op?.symbol ?? '',
+          style: TextStyle(
+            color: isLit ? Colors.white : opColor,
+            fontFamily: GoogleFonts.lilitaOne().fontFamily,
+            fontSize: size * 0.58,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+    }
+
     Color opColor;
     Color glowColor;
     switch (cell.op) {
@@ -139,6 +193,39 @@ class BoardCellWidget extends StatelessWidget {
 
   // --- Equals Cell (=) ---
   Widget _buildEqualsCell() {
+    if (isHighContrast) {
+      final isLit = isInSatisfiedEquation || isInActiveEquation;
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isLit ? const Color(0xFF1E1E1E) : Colors.black,
+          borderRadius: BorderRadius.circular(size * 0.22),
+          border: Border.all(
+            color: Colors.white,
+            width: 2.8,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black87,
+              offset: Offset(0, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Text(
+          '=',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: GoogleFonts.lilitaOne().fontFamily,
+            fontSize: size * 0.56,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+    }
+
     final isLit = isInSatisfiedEquation || isInActiveEquation;
     const eqColor = Color(0xFFE0E7FF);
 
@@ -203,6 +290,66 @@ class BoardCellWidget extends StatelessWidget {
   Widget _buildNumberCell(BuildContext context) {
     // 1. Given Number (Pre-filled Oak Carved Tile)
     if (cell.isGiven) {
+      if (isHighContrast) {
+        return Container(
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(size * 0.24),
+            border: Border.all(
+              color: isInSatisfiedEquation ? const Color(0xFF00C853) : Colors.black,
+              width: 3.0,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black54,
+                offset: Offset(0, 3),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Text(
+                '${cell.solutionValue ?? ''}',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                  fontSize: size * 0.50,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              // Clue indicator for color-blind/low-vision accessibility
+              Positioned(
+                top: 2,
+                right: 2,
+                child: Icon(
+                  Icons.lock_rounded,
+                  size: size * 0.20,
+                  color: Colors.black54,
+                ),
+              ),
+              if (isInSatisfiedEquation)
+                Positioned(
+                  top: 2,
+                  left: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF00C853),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 9),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+
       return Container(
         width: size,
         height: size,
@@ -260,6 +407,107 @@ class BoardCellWidget extends StatelessWidget {
 
     // 2. Interactive Blank Slot
     final hasValue = currentValue != null;
+
+    if (isHighContrast) {
+      Color borderColor;
+      double borderWidth = 2.8;
+
+      if (isTutorialTarget && !hasValue) {
+        borderColor = const Color(0xFFFFDD00);
+        borderWidth = 3.5;
+      } else if (isHighlightedInHint) {
+        borderColor = const Color(0xFF00FF66);
+        borderWidth = 3.5;
+      } else if (isSelected) {
+        borderColor = const Color(0xFFFFDD00);
+        borderWidth = 3.5;
+      } else if (isInViolatedEquation && hasValue) {
+        borderColor = const Color(0xFFFF1744);
+        borderWidth = 3.5;
+      } else if (isInSatisfiedEquation && hasValue) {
+        borderColor = const Color(0xFF00E676);
+        borderWidth = 3.0;
+      } else if (isInActiveEquation) {
+        borderColor = const Color(0xFFFFDD00);
+        borderWidth = 2.5;
+      } else {
+        borderColor = hasValue ? Colors.white : Colors.white70;
+        borderWidth = 2.2;
+      }
+
+      final Color tileColor = hasValue ? const Color(0xFFFFEA00) : Colors.black;
+
+      return GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: tileColor,
+            borderRadius: BorderRadius.circular(size * 0.24),
+            border: Border.all(
+              color: borderColor,
+              width: borderWidth,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black54,
+                offset: Offset(0, 3),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (hasValue)
+                Text(
+                  '$currentValue',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: size * 0.50,
+                    fontWeight: FontWeight.w900,
+                  ),
+                )
+              else
+                _buildNotesGrid(),
+              // Accessibility glyph badges for color-blindness:
+              if (isInViolatedEquation && hasValue)
+                Positioned(
+                  top: 2,
+                  left: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF1744),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 9),
+                  ),
+                )
+              else if (isInSatisfiedEquation && hasValue)
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF00C853),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 9),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     Color borderColor;
     double borderWidth = 2.0;
     List<BoxShadow> shadows = [];
@@ -401,7 +649,7 @@ class BoardCellWidget extends StatelessWidget {
           return Center(
             child: Icon(
               Icons.edit_rounded,
-              color: const Color(0xFFFFD54F),
+              color: isHighContrast ? const Color(0xFFFFDD00) : const Color(0xFFFFD54F),
               size: size * 0.40,
             ),
           );
@@ -411,8 +659,8 @@ class BoardCellWidget extends StatelessWidget {
           child: Container(
             width: size * 0.22,
             height: size * 0.22,
-            decoration: const BoxDecoration(
-              color: Color(0x66FFD54F),
+            decoration: BoxDecoration(
+              color: isHighContrast ? const Color(0xFFFFDD00) : const Color(0x66FFD54F),
               shape: BoxShape.circle,
             ),
           ),
@@ -432,6 +680,43 @@ class BoardCellWidget extends StatelessWidget {
     }
 
     final sortedNotes = notes!.toList()..sort();
+
+    if (isHighContrast) {
+      return Container(
+        padding: EdgeInsets.all(size * 0.06),
+        alignment: Alignment.center,
+        child: Wrap(
+          spacing: 3,
+          runSpacing: 2,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: sortedNotes.take(4).map((n) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: const Color(0xFFFFDD00),
+                  width: 1.2,
+                ),
+              ),
+              child: Text(
+                '$n',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: GoogleFonts.baloo2().fontFamily,
+                  fontSize: size * 0.24,
+                  fontWeight: FontWeight.w900,
+                  height: 1.0,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.all(size * 0.06),
       alignment: Alignment.center,
