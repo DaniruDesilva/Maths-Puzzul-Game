@@ -16,6 +16,7 @@ class MathGameToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context);
+    final isHighContrast = user.highContrastEnabled;
 
     // Compute hint badge text and styling
     final bool hasSpecialHints = user.hintsMega > 0 || user.hintsUltra > 0;
@@ -37,22 +38,25 @@ class MathGameToolbar extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF24170E),
-            Color(0xFF191008),
-          ],
-        ),
+        color: isHighContrast ? Colors.black : null,
+        gradient: isHighContrast
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF24170E),
+                  Color(0xFF191008),
+                ],
+              ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF52361F),
-          width: 1.5,
+          color: isHighContrast ? Colors.white : const Color(0xFF52361F),
+          width: isHighContrast ? 2.2 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.45),
+            color: Colors.black.withValues(alpha: isHighContrast ? 0.7 : 0.45),
             offset: const Offset(0, 4),
             blurRadius: 8,
           ),
@@ -67,6 +71,7 @@ class MathGameToolbar extends StatelessWidget {
               label: 'Undo',
               isEnabled: provider.moveHistory.isNotEmpty && !provider.isLevelComplete,
               accentColor: const Color(0xFF38BDF8),
+              isHighContrast: isHighContrast,
               onTap: () => provider.undo(),
             ),
           ),
@@ -78,6 +83,7 @@ class MathGameToolbar extends StatelessWidget {
               label: 'Erase',
               isEnabled: provider.selectedCell != null && !provider.isLevelComplete,
               accentColor: const Color(0xFFFB7185),
+              isHighContrast: isHighContrast,
               onTap: () => provider.clearSelectedCell(),
             ),
           ),
@@ -94,6 +100,7 @@ class MathGameToolbar extends StatelessWidget {
                   ? const Color(0xFFF59E0B)
                   : const Color(0xFF64748B),
               accentColor: const Color(0xFFFBBF24),
+              isHighContrast: isHighContrast,
               onTap: () => provider.toggleNotesMode(),
               onLongPress: () => _showNotesHelpSheet(context),
             ),
@@ -109,6 +116,7 @@ class MathGameToolbar extends StatelessWidget {
               badgeColor: hintBadgeColor,
               accentColor: const Color(0xFF10B981),
               isSuperHighlight: true,
+              isHighContrast: isHighContrast,
               onTap: () => _handleHintTap(context, user),
               onLongPress: () => _showHintPowerUpSheet(context, user),
             ),
@@ -725,6 +733,7 @@ class MathGameToolbar extends StatelessWidget {
     String? badge,
     Color? badgeColor,
     Color accentColor = const Color(0xFFFBBF24),
+    bool isHighContrast = false,
   }) {
     return GestureDetector(
       onTap: isEnabled ? onTap : null,
@@ -743,35 +752,48 @@ class MathGameToolbar extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isActive
-                          ? [
-                              accentColor.withValues(alpha: 0.35),
-                              const Color(0xFF3B2516),
-                            ]
-                          : (isSuperHighlight
-                              ? [
-                                  const Color(0xFF382916),
-                                  const Color(0xFF26190E),
-                                ]
-                              : [
-                                  const Color(0xFF332014),
-                                  const Color(0xFF22150D),
-                                ]),
-                    ),
+                    color: isHighContrast
+                        ? (isActive
+                            ? const Color(0xFFFFEA00)
+                            : (isSuperHighlight ? const Color(0xFF00FF66) : Colors.black))
+                        : null,
+                    gradient: isHighContrast
+                        ? null
+                        : LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isActive
+                                ? [
+                                    accentColor.withValues(alpha: 0.35),
+                                    const Color(0xFF3B2516),
+                                  ]
+                                : (isSuperHighlight
+                                    ? [
+                                        const Color(0xFF382916),
+                                        const Color(0xFF26190E),
+                                      ]
+                                    : [
+                                        const Color(0xFF332014),
+                                        const Color(0xFF22150D),
+                                      ]),
+                          ),
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
-                      color: isActive
-                          ? accentColor
-                          : (isSuperHighlight
-                              ? const Color(0xFF10B981).withValues(alpha: 0.6)
-                              : const Color(0xFF6B4828)),
-                      width: isActive || isSuperHighlight ? 1.8 : 1.2,
+                      color: isHighContrast
+                          ? (isActive
+                              ? Colors.black
+                              : (isSuperHighlight ? Colors.black : Colors.white))
+                          : (isActive
+                              ? accentColor
+                              : (isSuperHighlight
+                                  ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                                  : const Color(0xFF6B4828))),
+                      width: isHighContrast
+                          ? 2.5
+                          : (isActive || isSuperHighlight ? 1.8 : 1.2),
                     ),
                     boxShadow: [
-                      if (isActive || isSuperHighlight)
+                      if (!isHighContrast && (isActive || isSuperHighlight))
                         BoxShadow(
                           color: (isActive ? accentColor : const Color(0xFF10B981))
                               .withValues(alpha: 0.3),
@@ -779,7 +801,7 @@ class MathGameToolbar extends StatelessWidget {
                           spreadRadius: 1,
                         ),
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: Colors.black.withValues(alpha: isHighContrast ? 0.7 : 0.35),
                         offset: const Offset(0, 2.5),
                         blurRadius: 3,
                       ),
@@ -787,11 +809,15 @@ class MathGameToolbar extends StatelessWidget {
                   ),
                   child: Icon(
                     icon,
-                    color: isActive
-                      ? accentColor
-                      : (isSuperHighlight
-                          ? const Color(0xFF34D399)
-                          : Colors.white.withValues(alpha: 0.9)),
+                    color: isHighContrast
+                        ? (isActive
+                            ? Colors.black
+                            : (isSuperHighlight ? Colors.black : Colors.white))
+                        : (isActive
+                            ? accentColor
+                            : (isSuperHighlight
+                                ? const Color(0xFF34D399)
+                                : Colors.white.withValues(alpha: 0.9))),
                     size: 23,
                   ),
                 ),
@@ -804,9 +830,14 @@ class MathGameToolbar extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: badgeColor ?? const Color(0xFF0F766E),
+                        color: isHighContrast
+                            ? (badgeColor ?? Colors.black)
+                            : (badgeColor ?? const Color(0xFF0F766E)),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 1.0),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: isHighContrast ? 1.4 : 1.0,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.black45,
@@ -832,9 +863,9 @@ class MathGameToolbar extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: isActive
-                    ? accentColor
-                    : const Color(0xFFCBD5E1),
+                color: isHighContrast
+                    ? (isActive ? const Color(0xFFFFEA00) : Colors.white)
+                    : (isActive ? accentColor : const Color(0xFFCBD5E1)),
                 fontFamily: GoogleFonts.baloo2().fontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,

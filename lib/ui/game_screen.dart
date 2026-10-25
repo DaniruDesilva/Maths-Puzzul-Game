@@ -103,56 +103,65 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context);
+    final isHighContrast = user.highContrastEnabled;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: isHighContrast ? Colors.black : Colors.transparent,
       body: Stack(
         children: [
           // Deep Woodland / Twilight Village Background
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF0C1912), // Deep woodland dusk
-                  Color(0xFF16281E), // Cozy twilight pine
-                  Color(0xFF0E1610), // Grounded shadow
-                ],
-                stops: [0.0, 0.5, 1.0],
-              ),
+            decoration: BoxDecoration(
+              color: isHighContrast ? Colors.black : null,
+              gradient: isHighContrast
+                  ? null
+                  : const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF0C1912), // Deep woodland dusk
+                        Color(0xFF16281E), // Cozy twilight pine
+                        Color(0xFF0E1610), // Grounded shadow
+                      ],
+                      stops: [0.0, 0.5, 1.0],
+                    ),
             ),
           ),
 
-          // Custom Ambient Lantern Firefly Particles
-          const Positioned.fill(
-            child: FireflyParticles(),
-          ),
+          // Custom Ambient Lantern Firefly Particles (hidden in High Contrast mode to reduce visual noise)
+          if (!isHighContrast)
+            const Positioned.fill(
+              child: FireflyParticles(),
+            ),
 
-          // Ambient Background Glows
-          Positioned(
-            top: 80,
-            right: -60,
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.25, duration: 4.seconds),
-          ),
-          Positioned(
-            bottom: 60,
-            left: -80,
-            child: Container(
-              width: 380,
-              height: 380,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFB74D).withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.15, duration: 5.seconds),
-          ),
+          // Ambient Background Glows (hidden in High Contrast mode)
+          if (!isHighContrast) ...[
+            Positioned(
+              top: 80,
+              right: -60,
+              child: Container(
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.25, duration: 4.seconds),
+            ),
+            Positioned(
+              bottom: 60,
+              left: -80,
+              child: Container(
+                width: 380,
+                height: 380,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB74D).withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(end: 1.15, duration: 5.seconds),
+            ),
+          ],
 
           Consumer<GameProvider>(
             builder: (context, provider, child) => BackdropFilter(
@@ -216,10 +225,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return Column(
       children: [
         // 1. Top Bar with Level Badge, Progress & Score
-        _buildTopBar(provider, context),
+        _buildTopBar(provider, context, isHighContrast: user.highContrastEnabled),
 
         // 2. Equation Progress Bar
-        _buildEquationProgressBar(provider),
+        _buildEquationProgressBar(provider, isHighContrast: user.highContrastEnabled),
 
         // 3. Interactive Level 1 Onboarding Card
         if (onboardingInfo != null && onboardingInfo.step != OnboardingStep.completed)
@@ -287,7 +296,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTopBar(GameProvider provider, BuildContext context) {
+  Widget _buildTopBar(GameProvider provider, BuildContext context, {bool isHighContrast = false}) {
     final puzzle = provider.currentPuzzle;
     final diff = puzzle?.difficulty ?? Difficulty.easy;
 
@@ -328,16 +337,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF26190F),
+                      color: isHighContrast ? Colors.black : const Color(0xFF26190F),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                      border: Border.all(
+                        color: isHighContrast ? Colors.white : const Color(0xFF5A3C23),
+                        width: isHighContrast ? 2.0 : 1.5,
+                      ),
                       boxShadow: const [
                         BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: Color(0xFFFDE68A),
+                      color: isHighContrast ? Colors.white : const Color(0xFFFDE68A),
                       size: 18,
                     ),
                   ),
@@ -372,14 +384,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                             decoration: BoxDecoration(
-                              color: diffBg,
+                              color: isHighContrast ? Colors.black : diffBg,
                               borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: diffText.withValues(alpha: 0.6), width: 1.0),
+                              border: Border.all(
+                                color: isHighContrast ? Colors.white : diffText.withValues(alpha: 0.6),
+                                width: 1.0,
+                              ),
                             ),
                             child: Text(
                               diff.displayName.toUpperCase(),
                               style: TextStyle(
-                                color: diffText,
+                                color: isHighContrast ? Colors.white : diffText,
                                 fontFamily: GoogleFonts.baloo2().fontFamily,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
@@ -391,7 +406,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       Text(
                         'Cozy Math Village',
                         style: TextStyle(
-                          color: const Color(0xFF94A3B8),
+                          color: isHighContrast ? const Color(0xFFCBD5E1) : const Color(0xFF94A3B8),
                           fontFamily: GoogleFonts.baloo2().fontFamily,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -416,11 +431,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 builder: (context, user, _) => Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2E1C0F), Color(0xFF1E130A)],
-                    ),
+                    color: isHighContrast ? Colors.black : null,
+                    gradient: isHighContrast
+                        ? null
+                        : const LinearGradient(
+                            colors: [Color(0xFF2E1C0F), Color(0xFF1E130A)],
+                          ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
+                    border: Border.all(
+                      color: isHighContrast ? Colors.white : const Color(0xFFF59E0B),
+                      width: isHighContrast ? 2.0 : 1.2,
+                    ),
                     boxShadow: const [
                       BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
                     ],
@@ -428,12 +449,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
+                      Icon(
+                        Icons.star_rounded,
+                        color: isHighContrast ? const Color(0xFFFFEA00) : const Color(0xFFFBBF24),
+                        size: 18,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         '${user.totalScore}',
                         style: TextStyle(
-                          color: const Color(0xFFFFFBEB),
+                          color: isHighContrast ? Colors.white : const Color(0xFFFFFBEB),
                           fontFamily: GoogleFonts.lilitaOne().fontFamily,
                           fontSize: 15,
                         ),
@@ -451,16 +476,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF26190F),
+                    color: isHighContrast ? Colors.black : const Color(0xFF26190F),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                    border: Border.all(
+                      color: isHighContrast ? Colors.white : const Color(0xFF5A3C23),
+                      width: isHighContrast ? 2.0 : 1.5,
+                    ),
                     boxShadow: const [
                       BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.help_outline_rounded,
-                    color: Color(0xFFFDE68A),
+                    color: isHighContrast ? Colors.white : const Color(0xFFFDE68A),
                     size: 20,
                   ),
                 ),
@@ -473,16 +501,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF26190F),
+                    color: isHighContrast ? Colors.black : const Color(0xFF26190F),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF5A3C23), width: 1.5),
+                    border: Border.all(
+                      color: isHighContrast ? Colors.white : const Color(0xFF5A3C23),
+                      width: isHighContrast ? 2.0 : 1.5,
+                    ),
                     boxShadow: const [
                       BoxShadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4)
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings_rounded,
-                    color: Color(0xFFE2E8F0),
+                    color: isHighContrast ? Colors.white : const Color(0xFFE2E8F0),
                     size: 20,
                   ),
                 ),
@@ -495,7 +526,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   // --- Live Equation Completion Progress Tracker ---
-  Widget _buildEquationProgressBar(GameProvider provider) {
+  Widget _buildEquationProgressBar(GameProvider provider, {bool isHighContrast = false}) {
     final puzzle = provider.currentPuzzle;
     if (puzzle == null) return const SizedBox.shrink();
 
@@ -508,27 +539,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E140C).withValues(alpha: 0.8),
+        color: isHighContrast
+            ? Colors.black
+            : const Color(0xFF1E140C).withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isAllSolved
-              ? const Color(0xFF10B981)
-              : const Color(0xFF4A3320),
-          width: 1.2,
+          color: isHighContrast
+              ? (isAllSolved ? const Color(0xFF00FF66) : Colors.white)
+              : (isAllSolved
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF4A3320)),
+          width: isHighContrast ? 2.0 : 1.2,
         ),
       ),
       child: Row(
         children: [
           Icon(
             isAllSolved ? Icons.check_circle_rounded : Icons.calculate_outlined,
-            color: isAllSolved ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+            color: isHighContrast
+                ? (isAllSolved ? const Color(0xFF00FF66) : const Color(0xFFFFEA00))
+                : (isAllSolved ? const Color(0xFF34D399) : const Color(0xFFFBBF24)),
             size: 18,
           ),
           const SizedBox(width: 8),
           Text(
             'Equations: $satisfiedCount / $totalEquations',
             style: TextStyle(
-              color: isAllSolved ? const Color(0xFF6EE7B7) : const Color(0xFFE2E8F0),
+              color: isHighContrast
+                  ? Colors.white
+                  : (isAllSolved ? const Color(0xFF6EE7B7) : const Color(0xFFE2E8F0)),
               fontFamily: GoogleFonts.baloo2().fontFamily,
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
@@ -541,9 +580,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 6,
-                backgroundColor: const Color(0xFF2E1F14),
+                backgroundColor: isHighContrast
+                    ? const Color(0xFF222222)
+                    : const Color(0xFF2E1F14),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isAllSolved ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                  isHighContrast
+                      ? (isAllSolved ? const Color(0xFF00FF66) : const Color(0xFFFFEA00))
+                      : (isAllSolved ? const Color(0xFF10B981) : const Color(0xFFF59E0B)),
                 ),
               ),
             ),
@@ -1166,120 +1209,266 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogCtx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF26190F), Color(0xFF191008)],
-              ),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: const Color(0xFF5A3C23), width: 2),
-              boxShadow: const [
-                BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 10))
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'PAUSED',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                    fontSize: 32,
-                    color: const Color(0xFFFFD54F),
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                _buildMenuButton('RESUME', const Color(0xFF10B981), () {
-                  Navigator.pop(context);
-                }),
-                const SizedBox(height: 12),
-                _buildMenuButton('RESTART', const Color(0xFFF59E0B), () {
-                  provider.restartLevel();
-                  Navigator.pop(context);
-                }),
-                const SizedBox(height: 12),
-                Consumer<UserProvider>(
-                  builder: (context, user, _) {
-                    final isHc = user.highContrastEnabled;
-                    return GestureDetector(
-                      onTap: () => user.toggleHighContrast(),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: isHc ? Colors.white : Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isHc ? Colors.black : Colors.white24,
-                            width: 1.5,
-                          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Consumer<UserProvider>(
+            builder: (context, user, _) {
+              final isHc = user.highContrastEnabled;
+
+              return Container(
+                constraints: const BoxConstraints(maxWidth: 340),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                decoration: BoxDecoration(
+                  color: isHc ? Colors.black : null,
+                  gradient: isHc
+                      ? null
+                      : const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF26190F), Color(0xFF191008)],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.contrast_rounded,
-                              color: isHc ? Colors.black : const Color(0xFFFFD54F),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isHc ? 'HIGH CONTRAST: ON 👁️' : 'HIGH CONTRAST: OFF 👁️',
-                              style: TextStyle(
-                                color: isHc ? Colors.black : Colors.white,
-                                fontFamily: GoogleFonts.lilitaOne().fontFamily,
-                                fontSize: 14,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: isHc ? Colors.white : const Color(0xFF5A3C23),
+                    width: isHc ? 2.8 : 2.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isHc ? 0.9 : 0.54),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'PAUSED',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                          fontSize: 28,
+                          color: isHc ? const Color(0xFFFFEA00) : const Color(0xFFFFD54F),
+                          letterSpacing: 2,
                         ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 18),
+
+                      // RESUME
+                      _buildMenuButton(
+                        'RESUME',
+                        isHc ? const Color(0xFF00FF66) : const Color(0xFF10B981),
+                        () => Navigator.pop(dialogCtx),
+                        isHighContrast: isHc,
+                        textColor: isHc ? Colors.black : Colors.white,
+                      ),
+                      const SizedBox(height: 10),
+
+                      // RESTART
+                      _buildMenuButton(
+                        'RESTART',
+                        isHc ? const Color(0xFFFFEA00) : const Color(0xFFF59E0B),
+                        () {
+                          provider.restartLevel();
+                          Navigator.pop(dialogCtx);
+                        },
+                        isHighContrast: isHc,
+                        textColor: isHc ? Colors.black : Colors.white,
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Compact Quick Audio Controls (Sound & Music)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildAudioToggleButton(
+                              icon: user.soundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                              label: user.soundEnabled ? 'SOUND: ON' : 'SOUND: OFF',
+                              isActive: user.soundEnabled,
+                              isHighContrast: isHc,
+                              onTap: user.toggleSound,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildAudioToggleButton(
+                              icon: user.musicEnabled ? Icons.music_note_rounded : Icons.music_off_rounded,
+                              label: user.musicEnabled ? 'MUSIC: ON' : 'MUSIC: OFF',
+                              isActive: user.musicEnabled,
+                              isHighContrast: isHc,
+                              onTap: user.toggleMusic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // High Contrast Mode Toggle Button (ZERO overflow guaranteed with FittedBox)
+                      GestureDetector(
+                        onTap: () => user.toggleHighContrast(),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: isHc ? Colors.white : Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isHc ? Colors.black : Colors.white24,
+                              width: isHc ? 2.0 : 1.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 4),
+                            ],
+                          ),
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.contrast_rounded,
+                                    color: isHc ? Colors.black : const Color(0xFFFFD54F),
+                                    size: 19,
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Text(
+                                    isHc ? 'HIGH CONTRAST: ON' : 'HIGH CONTRAST: OFF',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      color: isHc ? Colors.black : Colors.white,
+                                      fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                                      fontSize: 14,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // QUIT TO VILLAGE
+                      _buildMenuButton(
+                        'QUIT TO VILLAGE',
+                        isHc ? const Color(0xFFFF3333) : const Color(0xFFEF4444),
+                        () {
+                          Navigator.pop(dialogCtx); // Close dialog
+                          Navigator.pop(context); // Close GameScreen
+                        },
+                        isHighContrast: isHc,
+                        textColor: Colors.white,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                _buildMenuButton('QUIT TO VILLAGE', const Color(0xFFEF4444), () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Close GameScreen
-                }),
-              ],
-            ),
+              );
+            },
           ),
         ).animate().scaleXY(begin: 0.85, end: 1.0, duration: 250.ms, curve: Curves.easeOutBack);
       },
     );
   }
 
-  Widget _buildMenuButton(String text, Color color, VoidCallback onTap) {
+  Widget _buildAudioToggleButton({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required bool isHighContrast,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isHighContrast
+              ? (isActive ? const Color(0xFFFFEA00) : const Color(0xFF222222))
+              : (isActive ? const Color(0xFF4A3425) : Colors.white.withValues(alpha: 0.08)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isHighContrast
+                ? (isActive ? Colors.black : Colors.white38)
+                : (isActive ? const Color(0xFFF59E0B) : Colors.white12),
+            width: 1.2,
+          ),
+        ),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isHighContrast
+                      ? (isActive ? Colors.black : Colors.white70)
+                      : (isActive ? const Color(0xFFFFD54F) : Colors.white54),
+                  size: 16,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: isHighContrast
+                        ? (isActive ? Colors.black : Colors.white70)
+                        : (isActive ? Colors.white : Colors.white54),
+                    fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                    fontSize: 11.5,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton(
+    String text,
+    Color color,
+    VoidCallback onTap, {
+    bool isHighContrast = false,
+    Color textColor = Colors.white,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 12),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white24, width: 1.5),
+          border: Border.all(
+            color: isHighContrast ? Colors.black : Colors.white24,
+            width: isHighContrast ? 2.5 : 1.5,
+          ),
           boxShadow: const [
             BoxShadow(color: Colors.black38, offset: Offset(0, 4), blurRadius: 4)
           ],
         ),
         child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: GoogleFonts.lilitaOne().fontFamily,
-              fontSize: 16,
-              letterSpacing: 1.0,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              text,
+              maxLines: 1,
+              style: TextStyle(
+                color: textColor,
+                fontFamily: GoogleFonts.lilitaOne().fontFamily,
+                fontSize: 15.5,
+                letterSpacing: 0.9,
+              ),
             ),
           ),
         ),

@@ -87,6 +87,62 @@ void main() {
         await tester.pumpWidget(const SizedBox());
       });
 
+      testWidgets('GameScreen Pause Menu and High Contrast toggle render with ZERO overflow on $deviceName', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        final game = GameProvider();
+        final user = UserProvider();
+        await user.initialized;
+
+        await tester.pumpWidget(
+          MultiProvider(
+            providers: [
+              ChangeNotifierProvider<UserProvider>.value(value: user),
+              ChangeNotifierProvider<GameProvider>.value(value: game),
+            ],
+            child: const MaterialApp(
+              home: GameScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Tap settings gear in top bar to open Pause Menu
+        final settingsGear = find.byIcon(Icons.settings_rounded);
+        expect(settingsGear, findsOneWidget);
+        await tester.tap(settingsGear);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('PAUSED'), findsOneWidget);
+        expect(find.text('HIGH CONTRAST: OFF'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Tap High Contrast button to toggle ON
+        await tester.tap(find.text('HIGH CONTRAST: OFF'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(user.highContrastEnabled, isTrue);
+        expect(find.text('HIGH CONTRAST: ON'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Tap High Contrast button to toggle OFF
+        await tester.tap(find.text('HIGH CONTRAST: ON'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(user.highContrastEnabled, isFalse);
+        expect(find.text('HIGH CONTRAST: OFF'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Tap Resume to close dialog
+        await tester.tap(find.text('RESUME'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
       testWidgets('VillageScreen renders perfectly on $deviceName', (tester) async {
         await tester.binding.setSurfaceSize(size);
         final user = UserProvider();
